@@ -14,6 +14,10 @@ const TYPES = {
   '.png' : 'image/png',
   '.svg' : 'image/svg+xml',
   '.mp4' : 'video/mp4',
+  '.wav' : 'audio/wav',
+  '.mp3' : 'audio/mpeg',
+  '.m4a' : 'audio/mp4',
+  '.ogg' : 'audio/ogg',
   '.ico' : 'image/x-icon'
 };
 
@@ -36,14 +40,15 @@ http.createServer((req, res) => {
   // the AV scanner here. Markup, CSS and JS always stat, so edits reload live.
   const ext = path.extname(file).toLowerCase();
   const cacheable = ext === '.jpg' || ext === '.png' || ext === '.svg'
-                 || ext === '.ico' || ext === '.mp4';
+                 || ext === '.ico' || ext === '.mp4' || ext === '.wav'
+                 || ext === '.mp3' || ext === '.m4a';
   if (cacheable) {
     const hit = CACHE.get(file);
     if (hit) {
       // serve byte ranges straight out of the cached buffer, so seeking the
       // video never goes back to disk
       const range = req.headers.range;
-      if (range && hit.type === 'video/mp4') {
+      if (range && (hit.type === 'video/mp4' || hit.type.startsWith('audio/'))) {
         const m = /bytes=(\d*)-(\d*)/.exec(range);
         const start = m[1] ? parseInt(m[1], 10) : 0;
         const end   = m[2] ? parseInt(m[2], 10) : hit.buf.length - 1;
@@ -81,7 +86,7 @@ http.createServer((req, res) => {
         if (e) { res.writeHead(500).end('Read error'); return; }
         CACHE.set(file, { buf, type });
 
-        if (range && type === 'video/mp4') {
+        if (range && (type === 'video/mp4' || type.startsWith('audio/'))) {
           const m = /bytes=(\d*)-(\d*)/.exec(range);
           const start = m[1] ? parseInt(m[1], 10) : 0;
           const end   = m[2] ? parseInt(m[2], 10) : buf.length - 1;
@@ -106,7 +111,7 @@ http.createServer((req, res) => {
     }
 
     // too large to cache: stream it, with range support so it can seek
-    if (range && type === 'video/mp4') {
+    if (range && (type === 'video/mp4' || type.startsWith('audio/'))) {
       const m = /bytes=(\d*)-(\d*)/.exec(range);
       const start = m[1] ? parseInt(m[1], 10) : 0;
       const end   = m[2] ? parseInt(m[2], 10) : stat.size - 1;

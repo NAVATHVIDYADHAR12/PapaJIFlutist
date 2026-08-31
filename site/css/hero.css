@@ -610,3 +610,43 @@
   .orb,.orb-sym,.orb-sym i,.orb-feather,.cloud,.feather,.mote,.note,.orb-wave-a,.orb-wave-b{ animation:none !important; }
   .hero{ height:130vh; }
 }
+
+/* ---------- the sound cue ----------
+   Only rendered when the browser actually refused the music. Browsers require
+   a gesture before anything unmuted may play, so without some sign of this a
+   first-time visitor simply watches a silent film and never learns that sound
+   was one tap away. It removes itself the moment the music starts. */
+.intro-sound-cue{
+  position:absolute; z-index:3; left:50%; bottom:26px;
+  transform:translateX(-50%);
+  display:inline-flex; align-items:center; gap:.6rem;
+  margin:0; padding:.55rem 1.1rem; border-radius:99px;
+  font-size:.78rem; font-weight:700; letter-spacing:.06em;
+  color:#F7F4EC; background:rgba(7,90,104,.38);
+  border:1px solid rgba(212,175,99,.55);
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+  animation:cueIn .7s var(--ease) both, cuePulse 2.6s ease-in-out 1s infinite;
+  pointer-events:none;
+}
+.intro-sound-cue[hidden]{ display:none; }
+@keyframes cueIn{ from{ opacity:0; transform:translateX(-50%) translateY(10px);} to{ opacity:1; transform:translateX(-50%);} }
+@keyframes cuePulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(212,175,99,.34);} 50%{ box-shadow:0 0 0 9px rgba(212,175,99,0);} }
+
+/* four little bars, bouncing like a level meter */
+.cue-bars{ display:inline-flex; align-items:flex-end; gap:2px; height:14px; }
+.cue-bars i{
+  width:3px; border-radius:2px; background:var(--gold);
+  animation:cueBar 1s ease-in-out infinite;
+}
+.cue-bars i:nth-child(1){ height:6px;  animation-delay:0s; }
+.cue-bars i:nth-child(2){ height:13px; animation-delay:.16s; }
+.cue-bars i:nth-child(3){ height:9px;  animation-delay:.32s; }
+.cue-bars i:nth-child(4){ height:14px; animation-delay:.48s; }
+@keyframes cueBar{ 0%,100%{ transform:scaleY(.42);} 50%{ transform:scaleY(1);} }
+
+@media (max-width:640px){
+  .intro-sound-cue{ bottom:70px; font-size:.7rem; padding:.45rem .85rem; }
+}
+@media (prefers-reduced-motion: reduce){
+  .intro-sound-cue,.cue-bars i{ animation:none; }
+}

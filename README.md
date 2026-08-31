@@ -110,6 +110,11 @@ no number.
   If you would rather drop the extra 1.9 MB, delete the two `<audio>` tags and
   the `filmaudio.js` include, and let the mp4 play unmuted.
 
+  When the browser does refuse, a small glass cue — four bouncing bars and
+  "Tap anywhere for sound" — appears at the foot of the film and removes
+  itself the instant the music starts. Without it a first-time visitor simply
+  watches a silent film and never learns sound was one tap away.
+
   Skip, Escape and Enter all dismiss the film.
 - **Headings type themselves in** letter by letter, and cards arrive one after
   another. Both replay every time you scroll back to them.

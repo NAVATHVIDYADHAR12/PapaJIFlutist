@@ -17,8 +17,9 @@ window.FilmAudio = (function () {
 var DRIFT = 0.22;          // seconds out of step before correcting
 var GESTURES = ['pointerdown', 'pointerup', 'click', 'keydown', 'touchstart', 'touchend'];
 
-function pair(video, audio) {
+function pair(video, audio, opts) {
   if (!video) return null;
+  opts = opts || {};
 
   var armed = false;
   var stopped = false;
@@ -29,9 +30,17 @@ function pair(video, audio) {
 
   function tryAudio() {
     if (!audio || stopped) return;
-    audio.currentTime = video.currentTime || 0;
+    // setting currentTime before the element has metadata can throw
+    try { audio.currentTime = video.currentTime || 0; } catch (e) {}
     var p = audio.play();
-    if (p && p.catch) p.catch(function () { arm(); });
+    if (p && p.then) {
+      p.then(function () {
+        if (opts.onSound) opts.onSound();
+      }).catch(function () {
+        arm();
+        if (opts.onBlocked) opts.onBlocked();
+      });
+    }
   }
 
   function onGesture() {

@@ -19,6 +19,7 @@ var intro  = document.getElementById('intro');
 var video  = document.getElementById('introVideo');
 var audio  = document.getElementById('introAudio');
 var skip   = document.getElementById('introSkip');
+var cue    = document.getElementById('introSoundCue');
 var film   = null;
 
 if (!intro || !video) return;
@@ -64,6 +65,7 @@ function finish() {
   signalDone();
   intro.classList.add('is-done');
   document.body.classList.remove('is-locked');
+  showCue(false);
   if (film) film.stop(); else { try { video.pause(); } catch (e) {} }
   // remove from the a11y tree and the paint path once faded out
   window.setTimeout(function () {
@@ -81,8 +83,15 @@ if (reduced) { finish(); return; }
    filmaudio.js keeps the muted picture and the WAV in step, and takes
    care of asking for the music again the moment the browser allows it.
    ------------------------------------------------------------ */
+function showCue(on) {
+  if (cue) cue.hidden = !on;
+}
+
 function start() {
-  film = window.FilmAudio ? window.FilmAudio.pair(video, audio) : null;
+  film = window.FilmAudio ? window.FilmAudio.pair(video, audio, {
+    onBlocked: function () { showCue(true); },
+    onSound:   function () { showCue(false); }
+  }) : null;
 
   if (film) {
     film.start();
