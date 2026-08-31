@@ -9,15 +9,21 @@
 /* ---------- video modal ---------- */
 var modal  = document.getElementById('vmodal');
 var video  = document.getElementById('vmodalVideo');
+var audio  = document.getElementById('vmodalAudio');
 var open   = document.getElementById('filmBtn');
 var close  = document.getElementById('vmodalClose');
 var scrim  = document.getElementById('vmodalScrim');
+
+// the film's own track is silent; the music is the paired WAV
+var film = (window.FilmAudio && video) ? window.FilmAudio.pair(video, audio) : null;
 
 function openModal() {
   if (!modal) return;
   modal.hidden = false;
   document.body.classList.add('is-locked');
-  if (video) {
+  // opened by a click, so the music is always permitted here
+  if (film) film.start();
+  else if (video) {
     video.currentTime = 0;
     var p = video.play();
     if (p && p.catch) p.catch(function () {});     // controls are there if autoplay is refused
@@ -27,7 +33,8 @@ function openModal() {
 
 function closeModal() {
   if (!modal || modal.hidden) return;
-  if (video) video.pause();
+  if (film) film.stop();
+  else if (video) video.pause();
   modal.hidden = true;
   document.body.classList.remove('is-locked');
   if (open) open.focus();

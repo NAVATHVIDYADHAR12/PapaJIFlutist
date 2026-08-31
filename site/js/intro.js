@@ -3,17 +3,23 @@
    Plays assets/intro.mp4 with sound the moment the page loads,
    then dissolves into the hero.
 
-   Browsers block unmuted autoplay unless the user has already
-   interacted with the site, so this tries sound first and, if the
-   browser refuses, starts muted and unmutes on the first gesture
-   without asking the visitor for anything.
+   The film's own track is silent, so the music is a separate WAV of
+   the same length played alongside it, paired by js/filmaudio.js so
+   the two start, stay and stop together.
+
+   Browsers block unmuted autoplay until the page has user activation.
+   The video is muted, so the picture always plays; the music joins at
+   the video's position the instant it is permitted — on the visitor's
+   first click, tap or key press, with nothing to press.
    ============================================================ */
 (function () {
 'use strict';
 
 var intro  = document.getElementById('intro');
 var video  = document.getElementById('introVideo');
+var audio  = document.getElementById('introAudio');
 var skip   = document.getElementById('introSkip');
+var film   = null;
 
 if (!intro || !video) return;
 
@@ -31,6 +37,7 @@ if (loadedScrolled()) {
   intro.setAttribute('hidden', '');
   video.removeAttribute('src');            // don't pull 4.8 MB nobody will see
   try { video.load(); } catch (e) {}
+  if (audio) { audio.removeAttribute('src'); try { audio.load(); } catch (e) {} }
   finished = true;
   signalDone();
   return;
@@ -54,98 +61,38 @@ function signalDone() {
 function finish() {
   if (finished) return;
   finished = true;
-  stopListening();
   signalDone();
   intro.classList.add('is-done');
   document.body.classList.remove('is-locked');
-  try { video.pause(); } catch (e) {}
+  if (film) film.stop(); else { try { video.pause(); } catch (e) {} }
   // remove from the a11y tree and the paint path once faded out
   window.setTimeout(function () {
     intro.setAttribute('hidden', '');
     video.removeAttribute('src');
     try { video.load(); } catch (e) {}
+    if (audio) { audio.removeAttribute('src'); try { audio.load(); } catch (e) {} }
   }, 1000);
 }
 
 if (reduced) { finish(); return; }
 
 /* ------------------------------------------------------------
-   SOUND
-
-   Browsers refuse unmuted autoplay until the document has user
-   activation. That is enforced by the browser and a page cannot opt
-   out of it, so the job here is to get sound on at the first possible
-   instant without ever asking the visitor to press anything.
-
-   Only real activation events count — `wheel` and `mousemove` do NOT
-   grant activation, so listening for them can never unlock audio.
+   PLAYBACK
+   filmaudio.js keeps the muted picture and the WAV in step, and takes
+   care of asking for the music again the moment the browser allows it.
    ------------------------------------------------------------ */
-var GESTURES = ['pointerdown', 'pointerup', 'click', 'keydown', 'touchstart', 'touchend'];
-var listening = false;
-
-function soundOn() {
-  video.muted = false;
-  video.volume = 1;
-  // Unmuting an autoplaying element can make the browser pause it, so ask
-  // for playback again — inside a gesture this is always granted.
-  var p = video.play();
-  if (p && p.catch) p.catch(function () {});
-}
-
-function onGesture() {
-  soundOn();
-  stopListening();
-}
-
-function stopListening() {
-  if (!listening) return;
-  listening = false;
-  GESTURES.forEach(function (e) { window.removeEventListener(e, onGesture, true); });
-}
-
-function listenForGesture() {
-  if (listening || finished) return;
-  listening = true;
-  // capture phase on window, so it fires no matter what was clicked
-  GESTURES.forEach(function (e) { window.addEventListener(e, onGesture, true); });
-}
-
 function start() {
-  // Armed up front rather than only after a refusal: a visitor who clicks
-  // while the first attempt is still pending gets sound immediately.
-  listenForGesture();
+  film = window.FilmAudio ? window.FilmAudio.pair(video, audio) : null;
 
-  video.muted = false;
-  video.volume = 1;
+  if (film) {
+    film.start();
+    return;
+  }
 
+  // helper missing for some reason: at least show the picture
+  video.muted = true;
   var p = video.play();
-  if (!p || !p.catch) return;
-
-  p.catch(function () {
-    // sound was refused — start it silently, the gesture listeners stand by
-    video.muted = true;
-    var q = video.play();
-    if (q && q.catch) q.catch(finish);   // playback refused outright: skip it
-    watchForActivation();
-  });
-}
-
-/* A safety net for activation my listeners did not see — a gesture that
-   landed before this script ran, or one the browser counted but did not
-   deliver here. Only unmutes once activation actually exists: unmuting
-   without it makes Chrome pause the video, which would be worse than
-   staying silent. */
-function watchForActivation() {
-  if (!navigator.userActivation) return;
-  var tries = 0;
-  var timer = window.setInterval(function () {
-    if (finished || !video.muted || tries++ > 60) { window.clearInterval(timer); return; }
-    if (navigator.userActivation.hasBeenActive) {
-      soundOn();
-      stopListening();
-      window.clearInterval(timer);
-    }
-  }, 300);
+  if (p && p.catch) p.catch(finish);
 }
 
 if (skip) skip.addEventListener('click', finish);

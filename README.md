@@ -23,6 +23,7 @@ site/
   css/bot.css           the chatbot
   css/extras.css        the burst button, contact email, footer social
   css/cursor.css        the glass-bubble cursor and its ripples
+  js/filmaudio.js       pairs the muted film with its soundtrack
   js/intro.js           the film that plays on load
   js/hero.js            scroll-scrubbed frame sequence
   js/ambient.js         gold dust, music particles, cursor spark, parallax
@@ -39,6 +40,7 @@ site/
   assets/logo-mark.jpg  the peacock mark (nav, tab, chatbot)
   assets/favicon.png    browser-tab icon
   assets/intro.mp4      the opening film
+  assets/intro-audio.wav  the film's soundtrack, played alongside it
 ```
 
 ## Adding your YouTube videos
@@ -88,13 +90,26 @@ no number.
 
 ## Notes on behaviour
 
-- **The opening film plays with sound.** It asks for unmuted playback first.
-  A browser only grants that once the page has *user activation*, so:
-  a returning visitor (or anyone whose browser has built up media engagement
-  for the site) hears it immediately on load; on a brand-new profile the film
-  starts muted and the **first click, tap or key press anywhere on the page**
-  turns sound on instantly — there is no button to find. This is a browser
-  rule that no website can opt out of. Verified both paths in Chrome.
+- **The opening film plays with sound.** The picture is a muted `<video>`
+  (muted video always autoplays, so it never fails to start) and the music is
+  `assets/intro-audio.wav` on a separate `<audio>`, paired by
+  [js/filmaudio.js](site/js/filmaudio.js): one start, one stop, and a
+  correction whenever they slip more than 0.22s apart.
+
+  A browser only permits unmuted audio once the page has *user activation*, so:
+  a returning visitor (or anyone whose browser has built media engagement for
+  the site) hears it immediately on load; on a brand-new profile the music
+  joins **at the video's current position** on the first click, tap or key
+  press anywhere — nothing to find, and the two stay in step. This is a browser
+  rule no website can opt out of. Verified both paths in Chrome.
+
+  Note that `assets/intro.mp4` carries this same soundtrack already. The
+  picture is therefore held muted at all times — including against the replay
+  modal's native controls — so the music can never play twice. That video's
+  volume slider drives the WAV instead, so it still does something useful.
+  If you would rather drop the extra 1.9 MB, delete the two `<audio>` tags and
+  the `filmaudio.js` include, and let the mp4 play unmuted.
+
   Skip, Escape and Enter all dismiss the film.
 - **Headings type themselves in** letter by letter, and cards arrive one after
   another. Both replay every time you scroll back to them.

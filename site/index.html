@@ -27,7 +27,8 @@
      ============================================================ -->
 <div class="intro" id="intro">
   <div class="intro-frame">
-    <video class="intro-video" id="introVideo" playsinline preload="auto" src="assets/intro.mp4"></video>
+    <video class="intro-video" id="introVideo" playsinline muted preload="auto" src="assets/intro.mp4"></video>
+    <audio id="introAudio" preload="auto" src="assets/intro-audio.wav"></audio>
     <div class="intro-veil" aria-hidden="true"></div>
   </div>
   <button class="intro-skip" id="introSkip" type="button">Skip <i aria-hidden="true"></i></button>
@@ -421,7 +422,8 @@
   <div class="vmodal-scrim" id="vmodalScrim"></div>
   <div class="vmodal-shell">
     <button class="vmodal-close" id="vmodalClose" type="button" aria-label="Close video">×</button>
-    <video class="vmodal-video" id="vmodalVideo" controls playsinline src="assets/intro.mp4"></video>
+    <video class="vmodal-video" id="vmodalVideo" controls playsinline muted src="assets/intro.mp4"></video>
+    <audio id="vmodalAudio" preload="none" src="assets/intro-audio.wav"></audio>
   </div>
 </div>
 
@@ -461,6 +463,7 @@
 
 <button class="topbtn" id="topBtn" type="button" aria-label="Back to top">↑</button>
 
+<script src="js/filmaudio.js"></script>
 <script src="js/intro.js"></script>
 <script src="js/hero.js"></script>
 <script src="js/ambient.js"></script>
