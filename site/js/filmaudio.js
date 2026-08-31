@@ -24,6 +24,7 @@ function pair(video, audio, opts) {
   var armed = false;
   var stopped = false;
   var poll = null;
+  var wasBlocked = false;
 
   video.muted = true;                         // its own track is silent
   if (audio) audio.volume = 1;
@@ -32,15 +33,31 @@ function pair(video, audio, opts) {
     if (!audio || stopped) return;
     // setting currentTime before the element has metadata can throw
     try { audio.currentTime = video.currentTime || 0; } catch (e) {}
+
     var p = audio.play();
-    if (p && p.then) {
-      p.then(function () {
-        if (opts.onSound) opts.onSound();
-      }).catch(function () {
-        arm();
-        if (opts.onBlocked) opts.onBlocked();
-      });
-    }
+    if (!p || !p.then) return;
+
+    p.then(function () {
+      /* The music was refused at load and has only now been allowed. Joining
+         at the current position means the visitor silently missed however
+         much has already gone by — which is exactly how people end up not
+         realising there was a soundtrack at all. Take the film back to the
+         start so they get the whole thing, unless it is nearly over, where
+         a jump backwards would be more jarring than the loss. */
+      if (wasBlocked && opts.restart !== false) {
+        var d = video.duration;
+        if (d && isFinite(d) && video.currentTime < d * 0.6) {
+          try { video.currentTime = 0; } catch (e) {}
+          try { audio.currentTime = 0; } catch (e) {}
+        }
+      }
+      wasBlocked = false;
+      if (opts.onSound) opts.onSound();
+    }).catch(function () {
+      wasBlocked = true;
+      arm();
+      if (opts.onBlocked) opts.onBlocked();
+    });
   }
 
   function onGesture() {

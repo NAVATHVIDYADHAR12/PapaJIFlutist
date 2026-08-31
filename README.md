@@ -110,10 +110,16 @@ no number.
   If you would rather drop the extra 1.9 MB, delete the two `<audio>` tags and
   the `filmaudio.js` include, and let the mp4 play unmuted.
 
-  When the browser does refuse, a small glass cue — four bouncing bars and
-  "Tap anywhere for sound" — appears at the foot of the film and removes
-  itself the instant the music starts. Without it a first-time visitor simply
-  watches a silent film and never learns sound was one tap away.
+  When the browser does refuse, **the film restarts from the beginning the
+  moment sound is permitted** — so whatever the visitor happens to click, and
+  whenever, they get the whole film with its music rather than joining part
+  way through and silently missing the opening. Past 60% it joins in place
+  instead, where a jump backwards would be more jarring than the loss.
+
+  A small glass cue — four bouncing bars and "Tap anywhere for sound" —
+  appears at the foot of the film only while the music is refused, and
+  removes itself the instant it starts. If a visitor never interacts at all,
+  the ▶ Play button in the hero replays the film with sound at any time.
 
   Skip, Escape and Enter all dismiss the film.
 - **Headings type themselves in** letter by letter, and cards arrive one after

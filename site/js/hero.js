@@ -86,7 +86,9 @@ function introDone() {
     var done = false;
     function go() { if (!done) { done = true; resolve(); } }
     document.addEventListener('intro:done', go, { once: true });
-    window.setTimeout(go, 12000);                   // never wait forever
+    // The film can restart itself once sound is permitted, so it may run to
+    // roughly twice its length. Long enough to cover that, and still a bound.
+    window.setTimeout(go, 26000);                   // never wait forever
   });
 }
 
