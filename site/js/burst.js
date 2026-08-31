@@ -20,11 +20,22 @@ if (!btn || !rain) return;
 
 var NOTES   = ['♪', '♫', '♬', '\u{1D11E}', '♩', '♭'];
 var NOTE_C  = ['#E24B7A', '#8A4BE2', '#0E7FA8', '#1F9A56', '#E8853A', '#D4AF63', '#19B7C5'];
+/* Five-petal blooms in the Design1 celebration palette, plus its two
+   character flowers. Design1 gives these the larger 22-34px band, which is
+   what stops the fall reading as confetti. */
 var FLOWERS = [
-  { c: '#FFFFFF', accent: '#E8C86A' },   // white
-  { c: '#F2A8C4', accent: '#C9527F' },   // pink
-  { c: '#F7DA6A', accent: '#D89B24' },   // yellow
-  { c: '#8FB6F2', accent: '#3E6FC4' }    // blue
+  { c: '#F08BB4', accent: '#FFE47A' },   // pink
+  { c: '#2F9ED8', accent: '#FFFFFF' },   // blue
+  { c: '#F27A22', accent: '#FFC75D' },   // orange
+  { c: '#FFFFFF', accent: '#FFC75D' },   // white
+  { c: '#FFE0A3', accent: '#D88A18' },   // soft gold
+  { c: '#1F8C68', accent: '#D7F1E7' }    // fresh green
+];
+
+var ROSES = [
+  { c: '#D9436F', accent: '#F7A8C0' },   // deep rose
+  { c: '#F08BB4', accent: '#FFE0EC' },   // blush
+  { c: '#C0392B', accent: '#F0A08F' }    // crimson
 ];
 var LEAVES  = [
   { c: '#2E9468', accent: '#7FC48F' },   // green
@@ -35,8 +46,10 @@ var LEAVES  = [
 // weighted mix, so the fall reads as music first and garden second
 var BAG = [];
 function fill(kind, n) { for (var i = 0; i < n; i++) BAG.push(kind); }
-fill('note', 8);
+fill('note', 7);
 fill('flower', 6);
+fill('sunflower', 3);
+fill('rose', 3);
 fill('leaf', 5);
 fill('feather', 3);
 fill('spark', 4);
@@ -54,9 +67,18 @@ function makeDrop() {
   } else if (kind === 'flower') {
     var f = pick(FLOWERS);
     el.className = 'drop drop-flower';
-    size = rand(12, 22);
+    size = rand(22, 34);                    // Design1's band for flowers
     el.style.setProperty('--c', f.c);
     el.style.setProperty('--accent', f.accent);
+  } else if (kind === 'sunflower') {
+    el.className = 'drop drop-sunflower';
+    size = rand(24, 36);
+  } else if (kind === 'rose') {
+    var r = pick(ROSES);
+    el.className = 'drop drop-rose';
+    size = rand(22, 32);
+    el.style.setProperty('--c', r.c);
+    el.style.setProperty('--accent', r.accent);
   } else if (kind === 'leaf') {
     var l = pick(LEAVES);
     el.className = 'drop drop-leaf';

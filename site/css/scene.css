@@ -167,13 +167,20 @@
 .fly-leaf.is-orange{ --c1:#E8853A; --c2:#F6B968; }
 .fly-leaf.is-yellow{ --c1:#E8B93A; --c2:#FBE08A; }
 
-/* five-petal flowers, pink and white */
-.fly-flower{ border-radius:50%; background:var(--pc); box-shadow:
-  0 -54% 0 -12% var(--pc), 0 54% 0 -12% var(--pc),
-  -52% 0 0 -12% var(--pc), 52% 0 0 -12% var(--pc); }
+/* five-petal flowers, pink and white — em offsets, same reason as .drop-flower */
+.fly-flower{
+  font-size:var(--s);
+  border-radius:50%; background:transparent;
+  box-shadow:
+    +0.000em -0.460em 0 -0.17em var(--pc),
+    +0.437em -0.142em 0 -0.17em var(--pc),
+    +0.270em +0.372em 0 -0.17em var(--pc),
+    -0.270em +0.372em 0 -0.17em var(--pc),
+    -0.437em -0.142em 0 -0.17em var(--pc);
+}
 .fly-flower::after{
-  content:""; position:absolute; inset:32%; border-radius:50%;
-  background:radial-gradient(circle,#F6D882,#D4AF63);
+  content:""; position:absolute; inset:30%; border-radius:50%;
+  background:radial-gradient(circle at 42% 38%, #FFF3CE, #D4AF63 78%);
 }
 .fly-flower.is-pink { --pc:#F2A8C4; }
 .fly-flower.is-white{ --pc:#FFFFFF; }
@@ -267,44 +274,77 @@
   width:auto; height:auto;
 }
 
-/* five-petal flowers — white, pink, yellow, blue */
+/* ---------- blooms ----------
+   The petals are box-shadow copies of the disc. They must be em, not
+   percentages: percentage offsets are invalid in box-shadow, so the whole
+   declaration was being dropped and every "flower" fell as a plain circle.
+   font-size is pinned to --s, so 1em is the drop's own size and the geometry
+   scales with it. ---------- */
+.drop-flower,
+.drop-sunflower,
+.drop-rose{ font-size:var(--s); }
+
+/* five petals at 72 degrees, in the Design1 palette */
 .drop-flower{
-  border-radius:50%; background:var(--c);
+  border-radius:50%; background:transparent;
   box-shadow:
-    0 -54% 0 -12% var(--c), 0 54% 0 -12% var(--c),
-    -52% 0 0 -12% var(--c), 52% 0 0 -12% var(--c);
+    +0.000em -0.460em 0 -0.17em var(--c),
+    +0.437em -0.142em 0 -0.17em var(--c),
+    +0.270em +0.372em 0 -0.17em var(--c),
+    -0.270em +0.372em 0 -0.17em var(--c),
+    -0.437em -0.142em 0 -0.17em var(--c);
 }
 .drop-flower::after{
-  content:""; position:absolute; inset:32%; border-radius:50%;
-  background:radial-gradient(circle,#FCEBAE,var(--accent,#D4AF63));
+  content:""; position:absolute; inset:30%; border-radius:50%;
+  background:radial-gradient(circle at 42% 38%, #FFF3CE, var(--accent,#D4AF63) 78%);
+  box-shadow:0 0 0 .04em rgba(93,58,32,.25);
 }
 
-/* leaves — green, yellow, orange */
-.drop-leaf{
-  border-radius:100% 0 100% 0; height:calc(var(--s) * .6);
-  background:linear-gradient(135deg,var(--c),var(--accent));
-}
-.drop-leaf::after{
-  content:""; position:absolute; inset:0; margin:auto;
-  width:78%; height:1px; transform:rotate(-45deg);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
-}
-
-/* peacock plumes */
-.drop-feather{
-  width:calc(var(--s) * .42); height:calc(var(--s) * 1.5);
-  border-radius:64% 36% 50% 50% / 34% 34% 78% 78%;
+/* sunflower: a ring of narrow petals round a seeded brown eye */
+.drop-sunflower{
+  border-radius:50%;
   background:
-    repeating-linear-gradient(97deg, rgba(8,126,158,.45) 0 1px, transparent 1px 4px),
-    linear-gradient(180deg, rgba(25,183,197,.6), rgba(22,139,114,.45) 48%, transparent);
+    repeating-conic-gradient(from 0deg,
+      #FFD24A 0deg 17deg, #EDA92E 17deg 25deg, transparent 25deg 30deg);
+  filter:drop-shadow(0 1px 2px rgba(93,58,32,.3));
 }
-.drop-feather::after{
-  content:""; position:absolute; left:50%; top:0;
-  width:56%; aspect-ratio:1/1.14; transform:translateX(-50%);
-  border-radius:50% 50% 52% 48% / 46% 46% 54% 54%;
-  background:radial-gradient(ellipse at 50% 46%,
-    #1B3A86 0 16%, #0E6FA8 17% 27%, #12A2A8 28% 40%,
-    #1F9A56 41% 56%, #7FBF5A 57% 70%, #D9B33F 71% 84%, rgba(212,175,99,.3) 85% 100%);
+.drop-sunflower::after{
+  content:""; position:absolute; inset:27%; border-radius:50%;
+  background:
+    radial-gradient(circle at 38% 34%, rgba(255,255,255,.32), transparent 55%),
+    repeating-radial-gradient(circle at 50% 50%,
+      #5D3A20 0 .055em, #7A4B26 .055em .11em),
+    #5D3A20;
+}
+
+/* rose: a scalloped outline of six petals over a tightening spiral, with the
+   light held to one side so it reads as layered rather than as a target */
+.drop-rose{
+  border-radius:50%;
+  background:
+    conic-gradient(from 200deg,
+      rgba(93,58,32,.30), transparent 30%,
+      rgba(255,255,255,.34) 62%, transparent 88%),
+    radial-gradient(circle at 46% 44%,
+      var(--accent) 0 9%,
+      var(--c)      10% 21%,
+      var(--accent) 22% 31%,
+      var(--c)      32% 45%,
+      var(--accent) 46% 56%,
+      var(--c)      57% 100%);
+  box-shadow:
+    +0.000em -0.400em 0 -0.22em var(--c),
+    +0.346em -0.200em 0 -0.22em var(--c),
+    +0.346em +0.200em 0 -0.22em var(--c),
+    +0.000em +0.400em 0 -0.22em var(--c),
+    -0.346em +0.200em 0 -0.22em var(--c),
+    -0.346em -0.200em 0 -0.22em var(--c);
+  filter:drop-shadow(0 1px 2px rgba(93,58,32,.26));
+}
+.drop-rose::after{
+  content:""; position:absolute; inset:40%; border-radius:50%;
+  background:conic-gradient(from 160deg, var(--c), var(--accent) 45%, var(--c) 85%);
+  box-shadow:inset 0 0 .05em rgba(93,58,32,.5);
 }
 
 /* tiny gold sparkles for grain */
