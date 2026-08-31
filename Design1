@@ -1,0 +1,453 @@
+Build a premium birthday tribute website with the same structure, design language, interactions, and animation behavior described below. The result must feel polished, emotional, musical, devotional, elegant, and alive, while staying usable and professional on mobile and desktop.
+
+PROJECT TYPE
+Create a single-page birthday tribute website with optional account/login pages and API/database-backed wishes. The main page must include:
+- Floating glass navbar
+- Animated hero with live birthday tracker
+- Gallery section with zoom/lightbox
+- Songs playlist section with embedded YouTube player and favorite stars
+- About/journey section with carousel cards
+- Wishes and good-deed memory form
+- Special letter modal with voice reader
+- Gift status section
+- Animated garden/footer
+- Floating chatbot/guide
+- Back-to-top button
+
+VISUAL STYLE
+Use a soft premium nature-and-devotion visual style. The design should feel like a warm fan tribute, not a corporate landing page.
+
+Core palette:
+- Deep teal/navy: #08243a, #0d3b57
+- Peacock teal: #0f6b78
+- Fresh green: #1f8c68
+- Golden saffron: #d88a18
+- Soft gold: #ffe0a3, #ffd84b
+- Cream background: #f3fbf7
+- Mist green: #d7f1e7
+- Ink text: #0b2330
+- Muted text: #49636a
+- White glass: rgba(255,255,255,0.62 to 0.9)
+
+Typography:
+- Display headings: Playfair Display, Georgia, serif
+- Body/UI: Plus Jakarta Sans, Arial, sans-serif
+- Use strong hierarchy. Hero h1 must be large and elegant. Cards and panels must use compact professional type.
+- Letter spacing must be 0. Do not use negative letter spacing.
+
+Shape language:
+- Border radius should be 8px for most UI.
+- Use glass panels with subtle borders, shadows, and blur.
+- Avoid oversized pill buttons except where necessary.
+- Avoid one-color monotone styling. Use teal, cream, green, gold, and navy together.
+
+Global background:
+- Body background should be cream/mint with subtle radial gradients and a faint grid pattern.
+- Add fixed ambient leaf particles drifting across the page.
+- Page content must sit above the ambient field using z-index layering.
+
+NAVBAR
+Create a fixed floating navbar centered near the top:
+- Width: min(1120px, calc(100% - 32px))
+- Height around 64px
+- Glass background: rgba(242,251,247,0.78)
+- Blur: backdrop-filter blur(18px)
+- Border: rgba(255,255,255,0.72)
+- Shadow: soft navy shadow
+- Brand mark on the left: square gradient signet with "SK", text "Simple Birthday" or project name.
+- Links: Home, About, Gifts & Wishes, Star favorites, Sending Gifts, Sign in/Login.
+- Navbar hides upward when scrolling down past 70px and reappears when scrolling up or near top.
+- Navbar gets stronger background/shadow after scrolling 20px.
+- Mobile navbar collapses to hamburger; menu opens below as a glass dropdown.
+
+Navbar account behavior:
+- Sign in/Login button links to /signup.
+- If a user is logged in, show "Hi, {name}" and a Logout button.
+- Do not expose email in browser display.
+
+Navbar favorites behavior:
+- Include "Star favorites" dropdown.
+- Dropdown is glass, scrollable, max-height around 320px desktop and 240px mobile.
+- It shows starred songs from the playlist.
+- On hover/focus, display favorite songs with year, title, category/language.
+- Clicking a favorite scrolls to the Songs section and plays that video in the embedded player.
+
+HERO SECTION
+Hero must fill the first viewport and include:
+- Animated sky/nature background with soft clouds, drifting spring leaves, peacock feathers, and simple bird flocks.
+- Background photo slideshow using two fading layers.
+- Photo meta label bottom/side showing current slide count like "01 / 17" and "Birthday gallery".
+- A live birthday tracker panel on one side.
+- Hero copy on the other side.
+
+Hero layout:
+- Desktop: two-column composition with tracker panel and copy balanced over the background.
+- Mobile: stacked layout with enough top padding for nav.
+- Hero must reveal a hint of the next section below when possible.
+
+Hero copy:
+- Eyebrow: "May 20 birthday edition"
+- H1: "Simple Kheral Birthday Wishes" or project-specific name
+- Supporting copy: a warm tribute description about wishes, blessings, good-deed photos, and birthday memories.
+- Actions:
+  - Send a wish -> #wishes
+  - Explore journey -> #about
+  - Gallery -> #gallery
+  - Songs -> #songs
+- Stats: current year, current age, gallery moments.
+
+Birthday tracker panel:
+- Glass card with portrait image at top.
+- Kicker: "Live birthday tracker"
+- Decorative CSS cake scene with candles, cherries, cake layers, plate, and age number.
+- Text: birthday wish line changes on birthday.
+- Countdown grid: days, hours, minutes, seconds.
+- Calendar note: next birthday date.
+- Button: "See celebration effect".
+
+Birthday logic:
+- Birthday date: May 20, 2000.
+- Calculate current age and next birthday countdown live every second.
+- If today is May 20, show birthday mode text.
+
+Celebration effect:
+- On button click, emit many animated particles across the viewport.
+- Particle types: sunflower, rose, blue flower, pink flower, orange flower, gift, balloon, sparkle.
+- Randomize x position, size, duration, delay, drift, spin, rotate, color.
+- Remove particles after around 9 seconds.
+- Slightly animate birthday panel with elastic scale if GSAP is available.
+
+GALLERY SECTION
+Section id: #gallery.
+Purpose: photo grid and zoom viewer.
+
+Design:
+- Section padding around 84px desktop, 58px mobile.
+- Heading with eyebrow "Gallery", h2 "Simple Kheral Gallery", short description.
+- Use animated heading decoration: butterfly/flower style pseudo-elements around h2.
+- Grid of gallery tiles, responsive:
+  - Desktop: multi-column masonry-like grid
+  - Mobile: one column
+- Each tile is a figure with an image button.
+- Images should be object-fit cover with consistent aspect ratios and rounded 8px corners.
+
+Interaction:
+- Clicking any image opens full-screen overlay.
+- Overlay uses dark teal translucent background and backdrop blur around 18px.
+- Center image in a viewer with close button "X".
+- Clicking outside or Escape closes.
+
+SONGS PLAYLIST SECTION
+Section id: #songs.
+This is a major feature.
+
+Design:
+- Heading eyebrow: "Her song playlist"
+- H2: "Simpal Kharel songs, bhajans, and devotional playlist."
+- Description: "Click here to view her song playlist, play videos inside the website, and star your favorite songs."
+- Background must be glassy and blurred, with teal/gold/green radial glow behind the playlist.
+- Layout:
+  - Desktop: player left, playlist right.
+  - Mobile: stacked player then list.
+- Outer shell:
+  - width min(1120px, calc(100% - 32px))
+  - grid columns 1.12fr and 0.88fr
+  - glass background, blur 22px, soft navy shadow
+  - 8px border radius
+- Player panel:
+  - Now playing copy: eyebrow, song title, year/category/language.
+  - 16:9 YouTube iframe.
+  - Use YouTube embed URLs and autoplay on song change.
+- Playlist panel:
+  - Button text: "Click here to view her song playlist"
+  - Button collapses/expands list.
+  - List max-height around 590px desktop, scrollable.
+  - Each row shows:
+    - star button
+    - year
+    - song title
+    - category/language
+    - "Play" tag
+  - Active song row gets gold-tinted background, stronger shadow, and border.
+  - Starred songs show gold star with glow.
+
+Playlist data order:
+Must be latest to oldest.
+
+Use this playlist:
+2026 - Meri Jhopdi Ke Bhaag (Ram Aayenge) - Ram Aayenge Female Version - Hindi - https://youtu.be/4Sn36Pwmn1Q?si=-7WVyrMNHaTJUpUF
+2026 - Narayan Mil Jayega (Extended) - Vishnu Bhajan - Hindi - https://youtu.be/r5CH0lay8X4?si=RnbbE7jrTNHZeFor
+2026 - Shyam Chudi Bechne Aaya - Krishna Bhajan - Hindi - https://youtu.be/tcVGQcy_tyQ?si=PwY9k94jfmnJipTw
+2026 - Shri Radha Kripa Kataksh Stotra - Krishna Bhajan - Sanskrit/Hindi - https://youtu.be/KEPvL9NRnCk?si=emRUhNZM2UBVKnOF
+2025 - Radha Rani Lage 2.0 / Variants - Devotional Re-release - Hindi - https://youtu.be/bHA29fCW9TY?si=9hrx3VHk9qZeqDhy
+2025 - More Ram Se Sunder Koi Nahi - Ram Bhajan Collaboration - Hindi - https://youtu.be/5PTs9wCo3fQ?si=6su1ipp15jX5IQoq
+2025 - Aarati Kunj Bihari Ki - Krishna Aarti - Hindi - https://youtu.be/Uax9gYVtInI?si=fmMvH0gu88an3rdi
+2024 - Madhurashtakam (Adharam Madhuram) - Krishna Bhajan - Sanskrit/Hindi - https://youtu.be/28CFlWbv3RA?si=y9LETz_Htt_E2HtS
+2024 - Ram Aayenge - Ram Bhajan - Hindi - https://youtu.be/ta-TKEyH_ic?si=OaFpmVBEHlGioM6t
+2024 - Nagari Ho Ayodhya Si - Ram Bhajan - Hindi - https://youtu.be/xBqWfVbnnXo?si=JUyN7aNCG7bvH6gC
+2024 - Shyama Aan Baso Vrindavan Mein - Krishna Bhajan - Hindi - https://youtu.be/45mT6CvbjkA?si=ljro2gx7OQ-BKSsA
+2024 - Achyutam Keshavam - Krishna Bhajan - Hindi - https://youtu.be/jOEJfsISeSQ?si=KL0YSH7BsHisNp1k
+2023 - Jaula Relaima (Female Version) - Nepali Modern Song - Nepali - https://youtu.be/1sosJxjbiIE?si=ViwquEffA8x7tbK0
+2023 - Narayan Mil Jayega - Vishnu Bhajan - Hindi - https://youtu.be/lCPZtdHx_N4?si=TUBuYa5QAkK9HsVe
+2023 - Om Namah Shivaya - Shiva Bhajan - Hindi - https://youtu.be/k38ysSufbvk?si=T13c28i7HCp2wxTS
+2023 - Radha Rani Lage - Viral Krishna Bhajan - Hindi - https://youtu.be/_9N_C4Yc-vE?si=H5uH8-Ob1moJwuHj
+2022 - Govind Bolo Hari Gopal Bolo - Krishna Bhajan - Hindi - https://youtu.be/bPza0eUdzw0?si=xaz4ChhXcvqBQqcM
+2022 - Mere Ghar Ram Aaye Hain - Ram Bhajan - Hindi - https://youtu.be/8N8y9z_ZWIY?si=TIU1g8wCi0ZFA_Hb
+2022 - Tum Prem Ho - Krishna Bhajan/Cover - Hindi - https://youtu.be/_rxDkrG5CWQ?si=nNebhGjlp6BO7iOY
+2022 - Shri Krishna Govind Hare Murari - Krishna Bhajan - Hindi - https://youtu.be/f18cpg-mTrY?si=988GDkgbfYjQ3LsM
+2021 - Timro Mayale Badhera Rakha - Romantic Nepali - Nepali - https://youtu.be/STHZvfeHKRs?si=vfLR6_oLzq7XzYsZ
+2021 - Raanjhanaa - Romantic Independent Song - Hindi/Nepali vibe - https://youtu.be/lE79THJ4T0Y?si=vuj4TJ_ejGKnhinH
+2021 - Ethereal - Modern Pop/Romantic - Nepali/English style - https://youtu.be/AAEtoysUZnw?si=ufoTx4GR-lvUG9BC
+2021 - K Yo Maya Ho - Original Romantic Song - Nepali - https://youtu.be/y5mRK6Km7Hw?si=Wkxl0pjM-DEzGtvi
+2021 - Ma Geet Hoon Timro - Original Romantic Song - Nepali - https://youtu.be/df1kIlLwCZ4?si=Lf5aQ1J8AimP5rdl
+
+Playlist behavior:
+- Extract YouTube video id from youtu.be or v= URLs.
+- Default active song: latest item, Meri Jhopdi Ke Bhaag.
+- Clicking a row updates iframe src to https://www.youtube.com/embed/{id}?autoplay=1&rel=0.
+- Update "Now playing" title and meta text.
+- Store starred favorites in localStorage key: simpal-kharel-playlist-favorites.
+- Navbar favorite menu must update immediately after starring/unstarring.
+
+ABOUT / JOURNEY SECTION
+Section id: #about.
+Purpose: present biography, journey, music identity, and creator presence.
+
+Include:
+- Heading: "Journey of a Nepali singer, performer, and digital creator."
+- Four about cards:
+  - Born: 20 May 2000
+  - Artist: Nepali singer
+  - Creator: Digital presence
+  - Vibe: Devotee energy
+- Cards should be glass/cream with subtle shadows and hover lift.
+
+Journey carousel:
+- Horizontal scroll belt with left/right buttons.
+- Cards with year or label, h3, paragraph.
+- Include some clickable media cards that open in the gallery lightbox.
+- Buttons scroll by card width or about 72% of container width.
+- Cards animate into view with reveal motion.
+
+Timeline:
+- Vertical or stacked timeline items:
+  - Music
+  - Digital
+  - Birthday
+  - Gallery
+- Each item has time/label, heading, paragraph.
+
+WISHES SECTION
+Section id: #wishes.
+Heading:
+- Eyebrow: "Gifts & Wishes"
+- H2: "Send wishes, blessings, and good-deed memories."
+- Description: invite user to add name, birthday message, optional good-deed description, and photo.
+
+Layout:
+- Two columns desktop:
+  - Wish form
+  - Blessing wall
+- Stacked mobile.
+- Cards are glassy white/cream with 8px radius.
+
+Wish form fields:
+- Name, max 60
+- Birthday message, max 400
+- Good-deed description, max 320
+- Optional image upload
+- Image preview area
+- Submit button
+- Form note/status line
+
+Storage behavior:
+- If served over http/https, submit to API route /api/wishes using FormData.
+- If API is unavailable or page is opened directly from file, save fallback locally in localStorage.
+- Merge database wishes with local wishes.
+- Show latest wishes first.
+- Clear saved wishes button clears database if available and localStorage.
+
+Wish card behavior:
+- Each wish card shows optional photo, sender name, message, good-deed text, date.
+- Add a button: "Read & thank".
+- Clicking the button uses speech synthesis to read:
+  "{name} sent this birthday wish: {message}. Good deed shared: {deed}. Thank you, {name}, from Vidyadhar Navath, for sending your wishes, blessings, and good-deed memories. Your message means a lot."
+- If no deed exists, omit the deed sentence.
+- Use an Indian English female voice if available; otherwise use available speech synthesis voice.
+- Update form note while reading.
+
+Database model:
+- Use separate stores/files/tables for login accounts and wishes.
+- Wishes store should never contain password fields.
+- Login store should never be exposed to client except public user id/name/createdAt.
+- Passwords must be hashed with salt. Never store raw passwords.
+- Do not return email to browser storage unless explicitly required.
+- For production hosting, use a real persistent database such as Supabase, Neon Postgres, MongoDB Atlas, or Vercel Postgres.
+- File JSON is acceptable only for local development.
+
+SPECIAL LETTER MODAL
+In the Blessing Wall area, include a decorated "Open special letter" button.
+
+Modal:
+- Full-screen overlay with dark teal transparent background and blur.
+- Center a decorated letter shell.
+- Include nature decorations: tree, grass, leaves, butterflies, roses.
+- Paper/card with:
+  - Kicker: "Heera letter"
+  - Heading: "For the rare diamond person"
+  - Three emotional devotional paragraphs.
+  - Button: "Heera voice reader"
+- Voice reader reads the letter using speech synthesis.
+- Click outside, close button, or Escape closes.
+
+GIFT SECTION
+Section id: #gifts.
+Text:
+- Eyebrow: "Sending gifts"
+- H2: "Gift delivery is planned, not active yet."
+- Explain that payment, delivery address, verification, and support need team integration.
+- Add action back to #wishes.
+
+FOOTER
+Footer should be a decorated garden-style ending.
+
+Include:
+- Glass/cream footer card.
+- Animated garden scene with trees, grass, flowers, white flowers, leaves, and butterflies.
+- Devotional birthday message:
+  "The Devotee you are, the pure you are, the perfect you are, the singer you are, You are one in Crore, A diamond person! Happy Birthday. May all happiness and gifts you wished will receive you soon as you wanted."
+- Footer small line: "Made for Simple Kheral birthday wishes. Birthday date tracked from May 20, 2000."
+
+CHATBOT / GUIDE
+Floating chatbot at bottom corner.
+
+Design:
+- Open button shaped like a decorative "Monal" guide, with small bird-style CSS illustration.
+- Label: Monal.
+- On click, open chat panel.
+- Panel heading:
+  - "Himalayan Monal guide"
+  - "Monal Birthday Bot"
+- Include initial message explaining it can guide user through Simple Kheral, birthday, songs, wishes, gallery, journey, letter, celebration effects, and gifts.
+- Suggestions: Who is she?, Wishes, Gallery.
+- Form with input, Mic, Read, Ask.
+
+Behavior:
+- Answer common questions using local keyword matching.
+- Voice-to-text with Web Speech Recognition if available.
+- Read latest bot answer with speech synthesis.
+- Add chirp/feedback micro-animation and optional short oscillator sound on open.
+
+ANIMATIONS
+Use GSAP with ScrollTrigger if available. Provide IntersectionObserver fallback.
+
+Reveal animation:
+- All elements with .reveal animate on scroll.
+- Basic reveal: y 32px, opacity 0 -> y 0, opacity 1.
+- Heading reveal: alternate from left/right using x +/-76px, opacity 0 -> x 0.
+- Duration: 0.8s normal, 0.9s headings.
+- Ease: power3.out or expo.out.
+- Trigger start: top 86%.
+
+Hero animations:
+- Clouds drift slowly horizontally.
+- Leaves float and rotate.
+- Bird flocks move across sky.
+- Peacock feathers drift softly.
+- Slideshow fades every 4 seconds.
+- Birthday cake candles flicker.
+
+Ambient animations:
+- Fixed leaves drift across page continuously.
+- Footer butterflies float.
+- Flowers gently pulse or sway.
+- Chatbot trigger floats subtly.
+- Top button fades/slides in after scrolling past 620px.
+
+Reduced motion:
+- Respect prefers-reduced-motion.
+- Disable long animations and reveal transforms.
+- Keep page readable and functional.
+
+RESPONSIVE RULES
+Desktop:
+- Navbar full horizontal.
+- Hero two-column.
+- Playlist two-column.
+- Wishes two-column.
+- Gallery multi-column.
+
+Tablet under 1060px:
+- Hero stacks or narrows.
+- Playlist switches to one column.
+- About/wish layouts can stack.
+
+Mobile under 780px:
+- Navbar hamburger menu.
+- Hero h1 around 3rem then smaller under 460px.
+- Gallery one column.
+- Playlist rows reduce to two columns: star + content; play tag moves below content.
+- Buttons may become full width.
+
+Small mobile under 460px:
+- Hero h1 around 2.45rem.
+- Primary/secondary buttons full width.
+- Keep all text inside containers with no overlap.
+- No horizontal scrolling.
+
+ACCESSIBILITY AND QUALITY
+- Use semantic sections with ids.
+- Buttons must be actual buttons.
+- Images need useful alt text unless decorative.
+- Modals use role="dialog" and aria-modal="true".
+- Nav toggle updates aria-expanded.
+- Playlist iframe needs title.
+- Favorite stars need aria-label for add/remove favorite.
+- Ensure keyboard focus works on nav, playlist, gallery, forms, and modals.
+- Use Escape to close gallery and letter modal.
+- No overlapping text.
+- No hidden content inaccessible on mobile.
+- Build must pass.
+- Test key interactions:
+  - nav hide/show
+  - mobile menu
+  - gallery zoom
+  - playlist play
+  - star favorite updates navbar
+  - favorite click scrolls to Songs and plays video
+  - signup/login
+  - wish submit/load
+  - Read & thank
+  - special letter voice reader
+  - top button
+
+IMPLEMENTATION NOTES
+- If using Next.js, main page may render static HTML body through a client wrapper, but all scripts must initialize after injection. If document is already loaded, call init immediately; otherwise listen to DOMContentLoaded.
+- Keep direct static file and served React version in sync if both exist.
+- Store public assets under /public so image/audio/video paths resolve from the website root.
+- Do not commit node_modules, .next, local logs, or local data JSON.
+- For deployment, replace local JSON databases with a persistent hosted database.
+
+FINAL EXPECTATION
+The finished webresite must look like a premium animated birthday tribute with nature, music, devotion, gallery memories, account access, playlist favorites, wishes, speech features, and a warm professional emotional tone. It must be responsive, polished, and reproducible from this blueprint.
+
+EXACT ANIMATION EFFECT PROMPT TO BUILD
+Build a premium birthday celebration effect where clicking the celebration button releases layered flowers, rose petals, glowing sparkles, balloons, gift boxes, and soft golden light from the bottom and sides of the screen. Particles should drift upward and fall diagonally with randomized size, delay, spin, opacity, and duration. Add a gentle elastic pulse to the birthday card, candle flicker on the cake, slow floating leaves in the background, and smooth GSAP-style reveal animations for headings and cards. The final feeling must be devotional, musical, elegant, emotional, nature-inspired, responsive, and polished.
+
+MY SOCIAL MEDIA
+- LinkedIn: https://www.linkedin.com/in/vidyadhar-navath-a56292377/
+- Instagram: https://www.instagram.com/vkbro_thers?igsh=MTZuOHhjYzJoMjRtdQ==
+- X/Twitter: https://x.com/vidyadharn60051
+
+SCROWLL ANIMATION TRANSITION
+Build a premium scroll-driven transition between the hero section and the next section. Add a fixed, pointer-events-none transition layer placed after the hero markup and before the next section. The layer must stay hidden by default and become visible only while the user is scrolling down through the hero-to-next-section boundary. Do not show this transition when the user scrolls up.
+
+Use GIF assets for the transition instead of CSS-drawn birds. Add multiple duplicated GIF elements so the screen feels full and cinematic, using assets like b1.gif, p2.gif, leaves.gif, pegion.gif, and leafe.gif. Use about four copies of the GIF group, around 20 total moving elements, with each element having a unique class for position, scale, opacity, travel distance, and timing variation. Make sure the GIF files are available in the public/static assets folder so the live website can load them.
+
+The animation direction must feel like the GIFs enter from the right/top side and travel toward the left/down side while scrolling down. Tilt each GIF from the top-right corner using transform-origin: 100% 0 and rotate around -40deg, so the left edge appears raised higher. The movement must be controlled by a CSS variable such as --transition-progress that is updated from JavaScript based on scroll position.
+
+The JavaScript should calculate the hero bottom and next-section top, define a long scroll range around that boundary, clamp the progress from 0 to 1, and ease it with smoothstep: progress * progress * (3 - 2 * progress). Use requestAnimationFrame for scroll updates. Track scroll direction with lastY/currentY and only activate the layer when direction is downward and progress is inside the active range. On upward scroll, immediately remove active classes so the GIF animation does not appear.
+
+The CSS should map --transition-progress into translate3d and scale values. Start the GIFs outside the right side of the viewport, stagger some farther out with larger start-x values, and move them across the screen with different travel-x and travel-y values. Keep motion smooth and consistent by using a longer scroll range in JavaScript and a short transform transition, such as 200ms to 240ms cubic-bezier(0.22, 1, 0.36, 1). Avoid fast rushing. The animation should feel slow, elegant, polished, and connected directly to the user's scroll.
+
+The transition layer must sit in front of the hero and next section without blocking clicks. Use a high z-index below navigation if needed, overflow hidden, opacity/visibility transitions, and responsive clamp sizes for GIF widths. Keep the existing hero, gallery, wishes, songs, and other page sections unchanged. The final result should be a smooth, premium, birthday-style nature transition where animated GIF birds/leaves glide across the hero boundary only on downward scroll.

@@ -1,0 +1,155 @@
+/* WHERE THE REAL CURSOR SURVIVES
+   This is one declaration on the root rather than a universal selector, and the
+   difference matters: cursor is an inherited property, so `.gcur-on *` was
+   forcing none onto the spans inside a button and the two spans inside the
+   logo -- which is why no arrow showed on their text. With inheritance instead,
+   anything that declares a cursor passes it down to its children for free, and
+   anything that declares none of its own quietly inherits none and gets the
+   bubble. cursor.js reads the computed value on hover and withdraws the bubble
+   wherever a real cursor survives, so the two are never on screen together. */
+.gcur-on{ cursor:none; }
+
+/* The bubble is for travelling across the page, not for pointing at things.
+   Anything clickable, and every image, hands the ordinary arrow back.
+   Children need no rules of their own; they inherit these. */
+.gcur-on a,
+.gcur-on button,
+.gcur-on summary,
+.gcur-on label,
+.gcur-on select,
+.gcur-on img,
+.gcur-on video,
+.gcur-on iframe,
+.gcur-on [role="button"],
+.gcur-on .track,
+.gcur-on .track-star,
+.gcur-on .track-body,
+.gcur-on .bot-chip,
+.gcur-on .fav-trigger,
+.gcur-on .list-toggle,
+.gcur-on .burst-btn,
+.gcur-on .filmbtn,
+.gcur-on .nav-burger,
+.gcur-on .topbtn,
+.gcur-on .bot-fab,
+.gcur-on .bot-close,
+.gcur-on .bot-send,
+.gcur-on .vmodal-close,
+.gcur-on .intro-skip{ cursor:default; }
+
+/* Boxes take the arrow across their whole face, clickable or not. The test is
+   whether the thing is visibly bounded -- it has a border or a panel background,
+   so it reads as an object you point at. Children inherit, so naming the
+   container is enough.
+
+   Prose does NOT qualify, and that is the important half of this rule. The hero
+   copy, section headings, ledes and tick lists are travelled over, not pointed
+   at, so they keep the bubble and its ripples as you read across them. */
+.gcur-on .nav,
+.gcur-on .card,
+.gcur-on .trad,
+.gcur-on .player-shell,
+.gcur-on .branch,
+.gcur-on .orb,
+.gcur-on .orb-caption,
+.gcur-on .hero-where,
+.gcur-on .course-quotes blockquote,
+.gcur-on .teacher-photo,
+.gcur-on .fav-menu,
+.gcur-on .bot-panel,
+.gcur-on .vmodal-shell,
+.gcur-on .social{ cursor:default; }
+
+/* text fields keep the I-beam */
+.gcur-on input,
+.gcur-on textarea{ cursor:text; }
+
+.gcur{
+  position:fixed; top:0; left:0; width:0; height:0;
+  pointer-events:none; z-index:9000;
+  opacity:0; transition:opacity .32s ease;
+  will-change:transform;
+}
+.gcur.in{ opacity:1; }
+.gcur.off{ opacity:0; }
+
+/* the ball */
+.gcur-rim{
+  position:absolute; left:-13px; top:-13px; width:26px; height:26px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.5);
+  background:
+    radial-gradient(58% 58% at 34% 30%, rgba(255,255,255,.55), rgba(255,255,255,.14) 52%, transparent 72%),
+    radial-gradient(100% 100% at 50% 55%, rgba(212,175,99,.34), rgba(25,183,197,.12) 60%, transparent 78%);
+  backdrop-filter:blur(1.8px) saturate(165%) brightness(1.06);
+  -webkit-backdrop-filter:blur(1.8px) saturate(165%) brightness(1.06);
+  box-shadow:
+    inset 0 1px 6px rgba(255,255,255,.4),
+    inset 0 -4px 9px rgba(212,175,99,.24),
+    0 3px 12px rgba(7,90,104,.26);
+  transition:transform .34s cubic-bezier(.22,.61,.36,1),
+             border-color .34s ease, box-shadow .34s ease;
+  animation:gcur-breathe 5.2s ease-in-out infinite;
+}
+
+/* the specular glint, drifting slowly so the ball never looks like a decal */
+.gcur-sheen{
+  position:absolute; left:-13px; top:-13px; width:26px; height:26px;
+  border-radius:50%; overflow:hidden; opacity:.85;
+  transition:transform .34s cubic-bezier(.22,.61,.36,1), opacity .34s ease;
+}
+.gcur-sheen::before{
+  content:''; position:absolute; left:19%; top:14%; width:38%; height:28%;
+  border-radius:50%;
+  background:linear-gradient(140deg, rgba(255,255,255,.9), rgba(255,255,255,.1));
+  filter:blur(1.5px);
+  animation:gcur-glint 5.2s ease-in-out infinite;
+}
+
+/* Over something clickable the ball keeps its size and only brightens -- it
+   used to swell, which read as heavy at this diameter. */
+.gcur.hot .gcur-rim{
+  border-color:rgba(212,175,99,.75);
+  box-shadow:
+    inset 0 1px 8px rgba(255,255,255,.5),
+    inset 0 -5px 11px rgba(212,175,99,.36),
+    0 4px 15px rgba(7,90,104,.3);
+}
+
+/* and pinches on press */
+.gcur.press .gcur-rim,
+.gcur.press .gcur-sheen{ transform:scale(.8); }
+
+/* the exact point, with no lag, so precision never suffers */
+.gcur-dot{
+  position:fixed; top:0; left:0; width:3px; height:3px; margin:-1.5px 0 0 -1.5px;
+  border-radius:50%; background:var(--gold-dp);
+  pointer-events:none; z-index:9001;
+  opacity:0; transition:opacity .32s ease;
+  will-change:transform;
+}
+.gcur-dot.in{ opacity:.85; }
+.gcur-dot.off{ opacity:0; }
+
+/* the wave it leaves behind */
+.gcur-wave{
+  position:fixed; inset:0; width:100%; height:100%;
+  pointer-events:none; z-index:8999;
+}
+
+@keyframes gcur-breathe{
+  0%,100%{ border-radius:50% 50% 50% 50%; }
+  33%    { border-radius:53% 47% 49% 51%; }
+  66%    { border-radius:47% 52% 51% 48%; }
+}
+@keyframes gcur-glint{
+  0%,100%{ transform:translate(0,0) rotate(0deg); opacity:.85; }
+  50%    { transform:translate(11%,7%) rotate(16deg); opacity:.62; }
+}
+
+/* the script never injects any of this on a touch screen or under reduced
+   motion, but belt and braces in case the markup is ever hand-placed */
+@media (hover:none), (pointer:coarse), (prefers-reduced-motion:reduce){
+  .gcur, .gcur-dot, .gcur-wave{ display:none !important; }
+  .gcur-on, .gcur-on *{ cursor:auto; }
+}

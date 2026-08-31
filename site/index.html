@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" class="js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Navath Vittaleshwar — Flute Classes | Hindustani · Carnatic · Lite Music</title>
+<meta name="description" content="Learn the art of flute playing with Navath Vittaleshwar. Hindustani, Carnatic and Lite music for adults and kids. No prior music experience needed. Tarnaka &amp; Kachiguda, Hyderabad.">
+
+<link rel="icon" type="image/png" href="assets/favicon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Manrope:wght@300;400;500;600;700;800&family=Italianno&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/hero.css">
+<link rel="stylesheet" href="css/sections.css">
+<link rel="stylesheet" href="css/scene.css">
+<link rel="stylesheet" href="css/bot.css">
+<link rel="stylesheet" href="css/extras.css">
+<link rel="stylesheet" href="css/cursor.css">
+</head>
+<body>
+
+<!-- ============================================================
+     INTRO — plays Herosectionvideo.mp4 on load, then dissolves
+     ============================================================ -->
+<div class="intro" id="intro">
+  <div class="intro-frame">
+    <video class="intro-video" id="introVideo" playsinline preload="auto" src="assets/intro.mp4"></video>
+    <div class="intro-veil" aria-hidden="true"></div>
+  </div>
+  <button class="intro-skip" id="introSkip" type="button">Skip <i aria-hidden="true"></i></button>
+</div>
+
+<!-- ambient page-wide field -->
+<div class="page-field" aria-hidden="true">
+  <span class="pf-glow pf-glow-a"></span>
+  <span class="pf-glow pf-glow-b"></span>
+  <span class="pf-glow pf-glow-c"></span>
+</div>
+<!-- pink monsoon leaves drifting right to left, behind the content -->
+<div class="drift" id="drift" aria-hidden="true"></div>
+
+<!-- the hanging vine in the top-right corner, with birds perched on it -->
+<div class="vine" aria-hidden="true">
+  <span class="vine-stem"></span>
+  <span class="vine-leaf vl-1"></span><span class="vine-leaf vl-2"></span>
+  <span class="vine-leaf vl-3"></span><span class="vine-leaf vl-4"></span>
+  <span class="vine-leaf vl-5"></span><span class="vine-leaf vl-6"></span>
+  <span class="vine-leaf vl-7"></span><span class="vine-leaf vl-8"></span>
+  <span class="vine-bird vb-1"><i></i><b></b></span>
+  <span class="vine-bird vb-2"><i></i><b></b></span>
+</div>
+
+<!-- the fly-past that crosses the screen as the hero hands over -->
+<div class="flyby" id="flyby" aria-hidden="true"></div>
+
+<!-- the shower that falls each time the ♫ button is pressed -->
+<div class="rain" id="rain" aria-hidden="true"></div>
+
+
+<!-- ============================================================
+     FLOATING NAV
+     ============================================================ -->
+<header class="nav" id="nav">
+  <a class="nav-brand" href="#home">
+    <img class="nav-signet" src="assets/logo-mark.jpg" alt="" width="40" height="40">
+    <span class="nav-brand-text">
+      <b>Flute Classes</b>
+      <i>Navath Vittaleshwar</i>
+    </span>
+  </a>
+
+  <nav class="nav-links" id="navLinks" aria-label="Primary">
+    <a href="#why">Why Flute</a>
+    <a href="#course">Course</a>
+    <a href="#teacher">Teacher</a>
+    <a href="#playlist">Playlist</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <div class="nav-right">
+    <div class="fav" id="fav">
+      <button class="fav-trigger" id="favTrigger" type="button" aria-haspopup="true" aria-expanded="false">
+        <span class="fav-star" aria-hidden="true">★</span>
+        <span class="fav-label">Favourites</span>
+        <span class="fav-count" id="favCount">0</span>
+      </button>
+      <div class="fav-menu" id="favMenu" role="menu">
+        <p class="fav-menu-title">Starred pieces</p>
+        <ul class="fav-list" id="favList"></ul>
+        <p class="fav-empty" id="favEmpty">Star a piece in the playlist and it will appear here.</p>
+      </div>
+    </div>
+    <a class="btn btn-gold nav-call" href="tel:+919440711441">Call Now</a>
+    <button class="nav-burger" id="navBurger" type="button" aria-label="Menu" aria-expanded="false"><i></i><i></i><i></i></button>
+  </div>
+</header>
+
+<main>
+
+<!-- ============================================================
+     HERO — scroll-scrubbed frame sequence
+     ============================================================ -->
+<section class="hero" id="home">
+  <div class="herostage">
+
+    <canvas id="heroframes" aria-hidden="true"></canvas>
+    <div class="hero-wash" aria-hidden="true"></div>
+
+    <!-- ambient sky: clouds, feathers, dust, notes -->
+    <div class="sky" aria-hidden="true">
+      <span class="cloud cloud-one"></span>
+      <span class="cloud cloud-two"></span>
+      <span class="cloud cloud-three"></span>
+      <span class="cloud cloud-four"></span>
+      <span class="cloud cloud-five"></span>
+
+      <span class="feather feather-one"><i></i></span>
+      <span class="feather feather-two"><i></i></span>
+      <span class="feather feather-three"><i></i></span>
+      <span class="feather feather-four"><i></i></span>
+      <span class="feather feather-five"><i></i></span>
+
+      <div class="dust" id="dust"></div>
+      <div class="notes" id="notes"></div>
+    </div>
+
+    <!-- sits above the ambient layer, below the copy: keeps drifting notes
+         and feathers from reading as if they were inside the text -->
+    <div class="copy-scrim" aria-hidden="true"></div>
+
+    <div class="heroinner">
+      <div class="hero-copy">
+        <div class="hero-top">
+          <button class="filmbtn" id="filmBtn" type="button">
+            <span class="filmbtn-ring" aria-hidden="true"><b class="filmbtn-play"></b></span>
+            <span class="filmbtn-text">Play</span>
+          </button>
+          <p class="eyebrow">Hindustani · Carnatic · Lite Music</p>
+        </div>
+        <h1>
+          <span class="h1-small">Learn the Art</span>
+          <span class="h1-big">of Flute Playing</span>
+        </h1>
+        <p class="signature">Where breath becomes melody</p>
+        <p class="lede">Personal, patient guidance for adults &amp; kids — no prior music experience needed. Master breath control, finger technique and tone from the very first note.</p>
+        <div class="heroactions">
+          <a class="btn btn-gold" href="#contact">Come Join Us</a>
+          <a class="btn btn-ghost" href="#course">Explore the Course</a>
+        </div>
+        <p class="hero-where">
+          <span class="where-pin" aria-hidden="true"></span>
+          <span class="where-line">Classes at <b>Tarnaka</b> &amp; <b>Kachiguda</b></span>
+          <span class="where-city">Hyderabad, Telangana</span>
+        </p>
+        <ul class="hero-stats">
+          <li><b>3</b><span>Traditions taught</span></li>
+          <li><b>2</b><span>Branches in Hyderabad</span></li>
+          <li><b>All</b><span>Ages &amp; levels</span></li>
+        </ul>
+        <a class="scrollcue" href="#why"><span>Scroll to begin</span><i aria-hidden="true"></i></a>
+      </div>
+
+      <!-- circular portrait jewel -->
+      <figure class="hero-portrait">
+        <div class="orb-tilt" id="orbTilt">
+        <div class="orb" id="orb" tabindex="0">
+          <svg class="orb-wave" viewBox="0 0 460 460" aria-hidden="true">
+            <defs>
+              <linearGradient id="waveGold" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#D4AF63"/>
+                <stop offset="50%" stop-color="#19B7C5"/>
+                <stop offset="100%" stop-color="#087E9E"/>
+              </linearGradient>
+              <linearGradient id="waveTeal" x1="1" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#168B72"/>
+                <stop offset="100%" stop-color="#D4AF63"/>
+              </linearGradient>
+            </defs>
+            <circle class="orb-ring-track" cx="230" cy="230" r="205"/>
+            <path class="orb-wave-a" d="M230 25 a205 205 0 0 1 0 410 a205 205 0 0 1 0 -410" stroke="url(#waveGold)"/>
+            <path class="orb-wave-b" d="M230 45 a185 185 0 0 0 0 370 a185 185 0 0 0 0 -370" stroke="url(#waveTeal)"/>
+          </svg>
+
+          <div class="orb-halo" aria-hidden="true"></div>
+          <div class="orb-photo">
+            <img src="assets/portrait.jpg" alt="Navath Vittaleshwar playing the bamboo flute" width="420" height="420">
+            <span class="orb-shine" aria-hidden="true"></span>
+          </div>
+
+          <span class="orb-sym orb-sym-1" aria-hidden="true"><i>♪</i></span>
+          <span class="orb-sym orb-sym-2" aria-hidden="true"><i>♫</i></span>
+          <span class="orb-sym orb-sym-3" aria-hidden="true"><i>𝄞</i></span>
+          <span class="orb-sym orb-sym-4" aria-hidden="true"><i>♬</i></span>
+          <span class="orb-feather orb-feather-1" aria-hidden="true"><i></i></span>
+          <span class="orb-feather orb-feather-2" aria-hidden="true"><i></i></span>
+          <span class="orb-feather orb-feather-3" aria-hidden="true"><i></i></span>
+        </div>
+        </div>
+        <figcaption class="orb-caption">
+          <span class="orb-caption-text">
+            <span class="orb-name">Navath Vittaleshwar</span>
+            <span class="orb-role">Flutist · Teacher · Performer</span>
+          </span>
+          <button class="burst-btn" id="burstBtn" type="button"
+                  aria-label="Play a shower of music and flowers">
+            <span class="burst-glyph" aria-hidden="true">♫</span>
+            <span class="burst-halo" aria-hidden="true"></span>
+          </button>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<span class="flyby-trigger" id="flybyTrigger" aria-hidden="true"></span>
+
+<!-- ============================================================
+     WHY
+     ============================================================ -->
+<section class="band band-sky" id="why">
+  <div class="wrap">
+    <header class="sechead">
+      <p class="eyebrow">Why Learn</p>
+      <h2>More than music — <em>a discipline for life</em></h2>
+    </header>
+    <div class="whygrid">
+      <article class="card rv-box">
+        <span class="card-num">01</span>
+        <h3>Learn the Art of Flute Playing</h3>
+        <p>Master breath control, finger technique and tone from the very first note.</p>
+      </article>
+      <article class="card rv-box">
+        <span class="card-num">02</span>
+        <h3>Improve Concentration &amp; Creativity</h3>
+        <p>Music sharpens focus and unlocks a calmer, more creative mind.</p>
+      </article>
+      <article class="card rv-box">
+        <span class="card-num">03</span>
+        <h3>Build Confidence Through Music</h3>
+        <p>Steady progress and small performances build lasting self-belief.</p>
+      </article>
+      <article class="card rv-box">
+        <span class="card-num">04</span>
+        <h3>Personal Attention for Every Student</h3>
+        <p>One-on-one guidance tailored to your pace, goals and taste.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     STYLES WE TEACH
+     ============================================================ -->
+<section class="band" id="styles">
+  <div class="wrap">
+    <header class="sechead">
+      <p class="eyebrow">Styles We Teach</p>
+      <h2>Three traditions, <em>one flute</em></h2>
+    </header>
+    <div class="tradgrid">
+      <article class="trad rv-box">
+        <span class="trad-num">01</span>
+        <h3>Hindustani</h3>
+        <p>North Indian classical ragas, alap and gayaki-ang phrasing.</p>
+        <span class="trad-eye" aria-hidden="true"></span>
+      </article>
+      <article class="trad rv-box">
+        <span class="trad-num">02</span>
+        <h3>Carnatic</h3>
+        <p>South Indian fundamentals, gamakas, varnams and kritis.</p>
+        <span class="trad-eye" aria-hidden="true"></span>
+      </article>
+      <article class="trad rv-box">
+        <span class="trad-num">03</span>
+        <h3>Lite Music</h3>
+        <p>Film songs, devotional &amp; light melodies you'll love to play.</p>
+        <span class="trad-eye" aria-hidden="true"></span>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     COURSE
+     ============================================================ -->
+<section class="band band-teal" id="course">
+  <div class="wrap course">
+    <div class="course-copy">
+      <p class="eyebrow">Course Highlights</p>
+      <h2>A structured yet <em>flexible</em> curriculum</h2>
+      <p class="lede">Designed to take you from your first breath to confident performance — at whatever pace suits your life.</p>
+      <ul class="ticks">
+        <li>Basic to Advanced Training</li>
+        <li>Hindustani Classical Techniques</li>
+        <li>Carnatic Music Fundamentals</li>
+        <li>Lite Music &amp; Film Songs</li>
+        <li>Flexible Learning for All Ages</li>
+        <li>Individual Guidance</li>
+      </ul>
+      <a class="btn btn-gold" href="#contact">Book a trial class</a>
+    </div>
+    <aside class="course-quotes">
+      <blockquote>Music is the language of the soul, and the flute gives it wings.</blockquote>
+      <blockquote>Every great musician was once a beginner. Start your musical journey today.</blockquote>
+      <blockquote>Let the melody of the flute bring peace, joy and inspiration to your life.</blockquote>
+    </aside>
+  </div>
+</section>
+
+<!-- ============================================================
+     TEACHER
+     ============================================================ -->
+<section class="band" id="teacher">
+  <div class="wrap teacher">
+    <figure class="teacher-photo rv-media">
+      <img src="assets/portrait.jpg" alt="Navath Vittaleshwar, flute teacher" width="520" height="520" loading="lazy">
+      <figcaption>Navath Vittaleshwar</figcaption>
+    </figure>
+    <div class="teacher-copy">
+      <p class="eyebrow">Your Teacher</p>
+      <h2>Navath <em>Vittaleshwar</em></h2>
+      <p>A dedicated flautist devoted to sharing the timeless beauty of the Indian bamboo flute. Whether you are a curious child or an adult rediscovering a dream, you'll learn at your own pace with warmth, patience and genuine care for your growth as a musician.</p>
+      <ul class="ticks">
+        <li>Teaches Hindustani, Carnatic &amp; Lite Music</li>
+        <li>Patient, beginner-friendly approach</li>
+        <li>Individual attention for every student</li>
+      </ul>
+      <p class="script-line">A lifelong journey through melody</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     PLAYLIST
+     ============================================================ -->
+<section class="band band-sky" id="playlist">
+  <div class="wrap">
+    <header class="sechead">
+      <p class="eyebrow">Listen</p>
+      <h2>The flute <em>playlist</em></h2>
+      <p class="lede center rv-text">Play recordings inside the site and star the ones you love — your favourites live in the navigation bar.</p>
+    </header>
+
+    <div class="player-shell rv-box">
+      <div class="player-panel">
+        <p class="eyebrow">Now playing</p>
+        <h3 id="npTitle">—</h3>
+        <p class="np-meta" id="npMeta">—</p>
+        <div class="player-frame" id="playerFrame">
+          <div class="player-placeholder" id="playerPlaceholder">
+            <span class="pp-note" aria-hidden="true">𝄞</span>
+            <p class="pp-title">Recording coming soon</p>
+            <p class="pp-sub">The YouTube link for this piece has not been added yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="list-panel">
+        <button class="list-toggle" id="listToggle" type="button" aria-expanded="true">
+          <span>View the full playlist</span><i aria-hidden="true"></i>
+        </button>
+        <ul class="tracklist" id="tracklist"></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CONTACT
+     ============================================================ -->
+<section class="band band-deep" id="contact">
+  <div class="wrap contact">
+    <div class="contact-copy">
+      <p class="eyebrow">Start Today</p>
+      <h2>Every great musician <em>was once a beginner</em></h2>
+      <p>Reach out to book a trial class or ask anything about lessons. We'd love to help you begin your journey with the flute.</p>
+      <div class="contact-actions">
+        <a class="btn btn-gold btn-lg" href="tel:+919440711441">Call 94407 11441</a>
+        <a class="btn btn-ghost btn-lg contact-mail" href="mailto:vittaleshwarnavathflutist@gmail.com">
+          <span class="mail-icon" aria-hidden="true"></span>
+          vittaleshwarnavathflutist@gmail.com
+        </a>
+      </div>
+    </div>
+    <div class="branches">
+      <p class="branches-title">Our Branches</p>
+      <div class="branch"><b>Tarnaka</b><span>Hyderabad</span></div>
+      <div class="branch"><b>Kachiguda</b><span>Hyderabad</span></div>
+      <div class="branch"><b>Cell</b><span><a href="tel:+919440711441">94407 11441</a></span></div>
+      <div class="branch branch-mail"><b>Email</b><span><a href="mailto:vittaleshwarnavathflutist@gmail.com">vittaleshwarnavathflutist@gmail.com</a></span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <span class="footer-feather" aria-hidden="true"><i></i></span>
+  <p class="footer-quote">"Where Breath Becomes Melody and Passion Becomes Music."</p>
+  <p class="footer-name">Navath Vittaleshwar</p>
+  <div class="footer-social">
+    <a class="social" href="https://www.instagram.com/flute.999999/" target="_blank" rel="noopener noreferrer">
+      <span class="social-icon social-ig" aria-hidden="true"></span>
+      <span class="social-text"><b>Instagram</b><i>@flute.999999</i></span>
+    </a>
+    <a class="social" href="mailto:vittaleshwarnavathflutist@gmail.com">
+      <span class="social-icon social-mail" aria-hidden="true"></span>
+      <span class="social-text"><b>Email</b><i>vittaleshwarnavathflutist@gmail.com</i></span>
+    </a>
+  </div>
+  <p class="footer-small">© 2026 Flute Classes · Navath Vittaleshwar</p>
+</footer>
+
+<!-- ============================================================
+     VIDEO MODAL (gaussian-blurred backdrop)
+     ============================================================ -->
+<div class="vmodal" id="vmodal" role="dialog" aria-modal="true" aria-label="Introduction film" hidden>
+  <div class="vmodal-scrim" id="vmodalScrim"></div>
+  <div class="vmodal-shell">
+    <button class="vmodal-close" id="vmodalClose" type="button" aria-label="Close video">×</button>
+    <video class="vmodal-video" id="vmodalVideo" controls playsinline src="assets/intro.mp4"></video>
+  </div>
+</div>
+
+<!-- ============================================================
+     CHATBOT
+     ============================================================ -->
+<div class="bot" id="bot">
+  <div class="bot-panel" id="botPanel" role="dialog" aria-modal="false" aria-label="Chat with Flute Classes" hidden>
+    <header class="bot-head">
+      <img class="bot-head-mark" src="assets/logo-mark.jpg" alt="" width="38" height="38">
+      <span class="bot-head-text">
+        <b>Flute Classes</b>
+        <i>Ask us anything</i>
+      </span>
+      <button class="bot-close" id="botClose" type="button" aria-label="Close chat">×</button>
+    </header>
+
+    <div class="bot-log" id="botLog"></div>
+
+    <div class="bot-chips" id="botChips"></div>
+
+    <form class="bot-form" id="botForm">
+      <input class="bot-input" id="botInput" type="text" autocomplete="off"
+             placeholder="Type your question…" aria-label="Your message">
+      <button class="bot-send" type="submit" aria-label="Send">→</button>
+    </form>
+  </div>
+
+  <button class="bot-fab" id="botFab" type="button" aria-expanded="false" aria-label="Open chat">
+    <span class="bot-ring" aria-hidden="true"></span>
+    <span class="bot-ring bot-ring-2" aria-hidden="true"></span>
+    <img class="bot-fab-mark" src="assets/logo-mark.jpg" alt="" width="60" height="60">
+    <span class="bot-note bot-note-1" aria-hidden="true">♪</span>
+    <span class="bot-note bot-note-2" aria-hidden="true">♫</span>
+  </button>
+</div>
+
+<button class="topbtn" id="topBtn" type="button" aria-label="Back to top">↑</button>
+
+<script src="js/intro.js"></script>
+<script src="js/hero.js"></script>
+<script src="js/ambient.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/playlist.js"></script>
+<script src="js/reveal.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/chatbot.js"></script>
+<script src="js/burst.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/cursor.js"></script>
+</body>
+</html>

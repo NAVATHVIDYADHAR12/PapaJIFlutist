@@ -1,0 +1,1123 @@
+================================================================================
+  BUILDING A SCROLL-REVEAL HERO WITH A VIDEO FRAME SEQUENCE
+  A step-by-step guide written for a first-attempt assistant
+================================================================================
+
+  Written by the assistant that built the working version, for whoever builds it
+  next. It contains the mistakes that were actually made, not an idealised
+  account. Follow it in order. Do not skip the verification steps.
+
+  Target: a full-screen hero whose background is a video played frame by frame,
+  scrubbed by the scroll position, with the headline overlaid on top.
+
+
+================================================================================
+  0.  THE THREE RULES.  READ THESE BEFORE WRITING ANY CODE.
+================================================================================
+
+  RULE 1 — DO NOT DELETE ANYTHING YOU DID NOT WRITE.
+
+    You are adding a hero to a page that already works. Every existing tool,
+    route, script and stylesheet must behave exactly as before when you finish.
+    If you cannot add a thing without removing another, stop and ask.
+
+    Specifically NEVER:
+      - delete or rename an existing file
+      - remove a <script> or <link> tag
+      - rewrite a shared stylesheet's variables
+      - change a router, or the ids/classes it depends on
+      - "tidy" code you were not asked to touch
+
+    Adding a new file is almost always safer than editing an old one.
+
+  RULE 2 — VERIFY AFTER EVERY STEP, NOT AT THE END.
+
+    Each step below ends with a check. Run it. If it fails, fix it before
+    moving on. Six small verified steps beat one large unverified one, because
+    when something breaks you know exactly which step did it.
+
+  RULE 3 — WHEN YOU ARE UNSURE, MEASURE. DO NOT GUESS.
+
+    "It should be fine" is how bottlenecks ship. Count the files. Check the
+    byte size. Print the frame index. Every number in this guide came from
+    measuring, not from assuming.
+
+
+================================================================================
+  1.  WHAT YOU ARE BUILDING
+================================================================================
+
+  The effect: as the reader scrolls through a tall section, a video appears to
+  play. It is not a video. It is a sequence of still images drawn onto a canvas,
+  one per scroll position.
+
+  The mechanism, in four sentences:
+
+    1. A tall section (say 340vh) creates scroll distance.
+    2. Inside it, a sticky child (100vh) stays pinned while that distance passes.
+    3. As you scroll, you compute how far through the tall section you are: 0 to 1.
+    4. That number picks a frame: index = round(progress * (frameCount - 1)).
+
+  That is the whole idea. Everything else is care.
+
+  WHY A CANVAS AND NOT A <video> TAG:
+    A <video> cannot be scrubbed smoothly. Setting currentTime forces a seek,
+    the browser decodes from the nearest keyframe, and it stutters badly under
+    fast scrolling. Pre-extracted stills have no seek cost at all.
+
+  WHY A CANVAS AND NOT AN <img> WHOSE src YOU SWAP:
+    Swapping src causes a decode and a layout flash per frame. Drawing an
+    already-decoded Image onto a canvas is a single blit. Decode once, draw many.
+
+
+================================================================================
+  2.  WHAT YOU MUST NOT BREAK
+================================================================================
+
+  Before you touch anything, write down what already works. On this project
+  that list was:
+
+    - a router that swaps between a landing page and ten tool panels
+    - ten tool controllers, each bound to elements by id
+    - a shared stylesheet with palette variables everything else reads
+    - an offline promise: no file is ever uploaded
+
+  Your hero must not interfere with any of them. Two concrete dangers:
+
+  DANGER A — a global scroll listener that assumes the landing page is visible.
+    When a tool opens, the landing page is hidden. Your handler will still fire
+    on every scroll. Guard it:
+
+        if (!hero) return;
+        const rect = hero.getBoundingClientRect();
+        if (rect.height === 0) return;   // hidden: nothing to do
+
+  DANGER B — ids that collide.
+    Search the project for the id before you use it. "nav", "hero", "canvas"
+    are all likely to exist already. Prefix yours if there is any doubt.
+
+  CHECK: list every id you intend to add, then grep the project for each one.
+         Zero hits means you are safe.
+
+
+================================================================================
+  3.  INPUTS YOU NEED BEFORE WRITING ANY CODE
+================================================================================
+
+  You need frames. Not a video — frames, already extracted, already resized.
+
+    Source video      any clip; 10 to 20 seconds is plenty
+    Frame count       60 to 90.  See section 11 for why not 300.
+    Dimensions        900 x 506 works well (16:9, sharp enough, small enough)
+    Format            JPEG, quality 60 to 70
+    Naming            f001.jpg, f002.jpg ... ZERO-PADDED, sequential, from 1
+    Location          assets/hero/
+    Total size        aim for 3 to 5 MB for the whole sequence
+
+  ZERO-PADDING IS NOT OPTIONAL. Without it, f10 sorts before f2 and your
+  sequence plays out of order. Pad to three digits and the problem disappears.
+
+  SPREAD THE FRAMES ACROSS THE WHOLE CLIP. Do not take the first 80 frames of a
+  300 frame clip — you will get the first three seconds in slow motion. Sample
+  evenly:
+
+      index_in_source = round(k * (total - 1) / (want - 1))
+
+  CHECK: list the folder. You should see f001.jpg through f0NN.jpg with no gaps.
+         Open the first and the last. They should look like the start and the
+         end of the clip, not two frames a second apart.
+
+
+================================================================================
+  4.  STEP ONE — THE MARKUP
+================================================================================
+
+  Add this. Do not modify surrounding markup beyond inserting it.
+
+      <section class="hero" id="hero">
+        <div class="herostage">
+          <canvas id="heroframes" aria-hidden="true"></canvas>
+
+          <div class="heroinner" id="heroinner">
+            <h1>Your headline</h1>
+            <p>Your supporting line.</p>
+            <div class="heroactions">
+              <button>Primary</button>
+              <a href="#next">Secondary</a>
+            </div>
+            <a class="scrollcue" href="#next"><span>Scroll</span><i></i></a>
+          </div>
+        </div>
+      </section>
+
+  NOTES THAT MATTER:
+
+    - The canvas carries aria-hidden. It is decoration; a screen reader must not
+      announce it.
+    - The scroll cue is INSIDE the content flow, after the buttons. See mistake
+      M4 in section 10 for what happens when you pin it to the bottom instead.
+    - The cue is an anchor, not a div. It should actually go somewhere.
+
+  CHECK: load the page. You should see your headline. The canvas will be blank —
+         that is correct at this stage.
+
+
+================================================================================
+  5.  STEP TWO — THE CSS
+================================================================================
+
+      .hero{ position:relative; height:340vh; }
+
+      .herostage{
+        position:sticky; top:0; height:100vh; overflow:hidden;
+        display:flex; align-items:center; justify-content:center;
+      }
+
+      .herostage canvas{
+        position:absolute; inset:0;
+        width:100%; height:100%;
+        object-fit:cover;
+        opacity:.34;
+      }
+
+      /* text must stay readable over any frame */
+      .herostage::after{
+        content:''; position:absolute; inset:0; pointer-events:none;
+        background:
+          radial-gradient(120% 90% at 50% 40%,
+            transparent 0%, rgba(8,8,8,.55) 55%, #080808 100%),
+          linear-gradient(180deg,
+            rgba(8,8,8,.9) 0%, transparent 22%, transparent 70%, #080808 100%);
+      }
+
+      .heroinner{ position:relative; z-index:2; text-align:center; }
+
+  WHY EACH LINE IS THERE:
+
+    height:340vh
+        The scroll distance. 340vh gives roughly two and a half screens of
+        scrolling to play the sequence. Less feels rushed; more feels like the
+        page has stalled. Tune this LAST, once everything works.
+
+    position:sticky; top:0
+        Pins the stage while the tall parent scrolls past. The parent MUST NOT
+        have overflow:hidden anywhere in its ancestry or sticky silently stops
+        working. This is the single most common reason "sticky doesn't work".
+
+    object-fit:cover on the canvas
+        Lets you draw at the frame's natural size (900x506) and let CSS crop it
+        to the viewport. Without this you would have to recompute the draw
+        rectangle on every resize. Let CSS do it.
+
+    opacity:.34
+        The frames are a backdrop, not the subject. At full opacity the text
+        becomes unreadable and the page looks like a screensaver.
+
+    the ::after gradient
+        This is what makes white text legible over a bright frame. Do not skip
+        it. pointer-events:none so it never eats a click.
+
+    z-index:2 on the content
+        Above the canvas AND above the gradient.
+
+  CHECK: scroll. The headline should stay pinned in the middle of the screen for
+         a while, then release. The canvas is still blank. That is still correct.
+
+
+================================================================================
+  6.  STEP THREE — THE JAVASCRIPT
+================================================================================
+
+  Write this in a NEW file. Do not append it to an existing script.
+
+      (function () {
+      'use strict';
+
+      const FRAME_COUNT = 80;
+      const framePath = i => 'assets/hero/f' + String(i).padStart(3,'0') + '.jpg';
+
+      const hero   = document.getElementById('hero');
+      const canvas = document.getElementById('heroframes');
+      if (!hero || !canvas) return;          // never assume the markup is there
+
+      const images = new Array(FRAME_COUNT).fill(null);
+      let ctx = null, lastDrawn = -1, ticking = false;
+
+      canvas.width  = 900;                   // the frame's natural size
+      canvas.height = 506;                   // CSS handles the display size
+      ctx = canvas.getContext('2d', { alpha:false });
+      ctx.fillStyle = '#080808';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      function load(i){
+        return new Promise(resolve => {
+          const img = new Image();
+          img.onload  = () => { images[i] = img; resolve(img); };
+          img.onerror = () => resolve(null);  // one bad frame must not stop the rest
+          img.src = framePath(i + 1);
+        });
+      }
+
+      function nearestLoaded(i){
+        if (images[i]) return images[i];
+        for (let d = 1; d < FRAME_COUNT; d++){
+          if (images[i-d]) return images[i-d];
+          if (images[i+d]) return images[i+d];
+        }
+        return null;
+      }
+
+      function draw(i){
+        const img = nearestLoaded(i);
+        if (!img) return;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      }
+
+      function update(){
+        ticking = false;
+        const rect  = hero.getBoundingClientRect();
+        if (rect.height === 0) return;               // hero hidden: do nothing
+        const total = rect.height - window.innerHeight;
+        const progress = total <= 0 ? 0
+                       : Math.min(1, Math.max(0, -rect.top / total));
+
+        const i = Math.min(FRAME_COUNT - 1,
+                           Math.round(progress * (FRAME_COUNT - 1)));
+        if (i !== lastDrawn){ lastDrawn = i; draw(i); }
+      }
+
+      function onScroll(){
+        if (!ticking){ ticking = true; requestAnimationFrame(update); }
+      }
+
+      window.addEventListener('scroll', onScroll, { passive:true });
+      window.addEventListener('resize', () => { lastDrawn = -1; update(); },
+                              { passive:true });
+      onScroll();
+
+      })();
+
+  THE FOUR LINES THAT PREVENT BOTTLENECKS:
+
+    if (!ticking){ ticking = true; requestAnimationFrame(update); }
+        Scroll fires far more often than the screen refreshes. Without this you
+        do the work dozens of times per frame for no visible benefit. This
+        collapses a burst of scroll events into one draw per animation frame.
+
+    { passive:true }
+        Tells the browser you will not call preventDefault, so it need not wait
+        for your handler before scrolling. Without it, scrolling can feel heavy.
+
+    if (i !== lastDrawn)
+        Most scroll events land on the same frame index as the last one.
+        Redrawing an identical image is pure waste. Skip it.
+
+    nearestLoaded(i)
+        Frames arrive over the network out of order relative to scrolling. Never
+        show a blank canvas: draw the closest frame you actually have.
+
+
+================================================================================
+  7.  STEP FOUR — PROGRESSIVE LOADING
+================================================================================
+
+  DO NOT wait for all 80 frames before showing anything. On a slow connection
+  that is several seconds of blank hero.
+
+      async function preload(){
+        await load(0);
+        draw(0);                              // something on screen immediately
+
+        const CONCURRENCY = 6;
+        let next = 1;
+        await Promise.all(new Array(CONCURRENCY).fill(0).map(async () => {
+          while (next < FRAME_COUNT){
+            const i = next++;
+            await load(i);
+            if (i === lastDrawn) draw(i);     // repaint if the reader is here
+          }
+        }));
+        update();
+      }
+      preload();
+
+  WHY SIX AT A TIME:
+    One at a time wastes the connection. All eighty at once floods it, and the
+    browser queues them anyway. Six keeps the pipe full without starving the
+    rest of the page (fonts, stylesheets, the actual content).
+
+  CHECK: throttle the network in devtools to "Fast 3G" and reload. The first
+         frame should appear almost at once, and scrubbing should never show a
+         blank canvas — only a slightly stale frame that catches up.
+
+
+================================================================================
+  8.  STEP FIVE — WIRE IT IN
+================================================================================
+
+  Add the script tag AFTER the markup exists, at the end of <body>, and AFTER
+  any script it depends on:
+
+      <script src="js/hero.js"></script>
+
+  Do not use `defer` and then rely on document order with a non-deferred script.
+  Do not put it in <head> without defer. Both give you a null canvas.
+
+  CHECK: open the console. Zero errors. If you see "Cannot read properties of
+         null", your script ran before the markup existed.
+
+
+================================================================================
+  9.  STEP SIX — VERIFICATION
+================================================================================
+
+  Do all of these. Each one has caught a real bug.
+
+    [ ] Scroll slowly from top to bottom of the hero. The sequence plays forward
+        smoothly and reaches the last frame exactly as the hero releases.
+    [ ] Scroll back up. It plays backward. No stalling, no jumps.
+    [ ] Resize the window mid-hero. The frame redraws at the new size.
+    [ ] Reload while scrolled halfway down. The correct frame appears, not frame 1.
+    [ ] Throttle to Fast 3G. First frame is quick; no blank canvas at any point.
+    [ ] Open every other page and feature of the site. Everything still works.
+    [ ] Console: zero errors, zero 404s.
+    [ ] Network tab: exactly FRAME_COUNT image requests, all 200.
+    [ ] Turn on "prefers-reduced-motion" in the OS. The page is still usable.
+
+  THAT SEVENTH CHECK IS THE ONE PEOPLE SKIP. It is the one that catches you
+  having broken something else.
+
+
+================================================================================
+  10.  THE MISTAKES THAT ACTUALLY HAPPENED
+================================================================================
+
+  Every one of these cost real time on the real build.
+
+  M1 — WRITING FILES THROUGH A SHELL HEREDOC.
+       Content containing quotes, apostrophes and backticks kept breaking the
+       shell parser, and the command silently did nothing at all. Twice the
+       "fix" was applied to a file that had never been written.
+       LESSON: write files with a file-writing tool, not by piping text through
+       a shell. If you must, verify the file changed afterwards.
+
+  M2 — NESTED ANIMATION STAGES.
+       A wrapper faded in over 170ms while its own children each had their own
+       delays. Nested opacity MULTIPLIES: a child at 0ms inside a parent at
+       170ms is invisible until the parent catches up, so the staggering did
+       nothing at all.
+       LESSON: only leaf elements should carry an entrance animation.
+
+  M3 — DOUBLE-COUNTING SCROLL IN A COORDINATE.
+       Code did `event.clientX - rect.left + container.scrollLeft`.
+       getBoundingClientRect ALREADY accounts for scroll. The offset was wrong
+       by exactly the scroll distance.
+       LESSON: rect coordinates are viewport-relative. Do not add scroll to them.
+
+  M4 — PINNING THE SCROLL CUE TO THE BOTTOM OF THE STAGE.
+       It sat at bottom:34px, directly inside the darkest part of the overlay
+       gradient, and was effectively invisible.
+       LESSON: put the cue in the content flow under the buttons, where the
+       gradient is not at its strongest.
+
+  M5 — ASSUMING AN <a> LOOKS LIKE A <button>.
+       A button was changed to a link so it could open a new tab. It lost its
+       entire appearance, because the styling was attached to the `button`
+       element selector. It rendered as bare underlined text.
+       LESSON: when you change an element's tag, re-check every style that
+       targeted the old tag.
+
+  M6 — ASSUMING THE SEQUENCE SHOULD START AT FRAME 1 OF THE SOURCE.
+       Taking the first N frames of a long clip gives you the opening moment in
+       slow motion, not the clip.
+       LESSON: sample evenly across the whole source.
+
+  M7 — FORGETTING THAT A HIDDEN HERO STILL RECEIVES SCROLL EVENTS.
+       When the hero was hidden, getBoundingClientRect returned zeroes and the
+       progress calculation produced NaN, which then poisoned the frame index.
+       LESSON: guard on rect.height === 0 before computing anything.
+
+
+================================================================================
+  11.  BOTTLENECKS, AND HOW TO NOT CREATE THEM
+================================================================================
+
+  B1 — TOO MANY FRAMES.
+       300 frames at full size was 35 MB. That is not a hero, that is a
+       download. 80 frames at 900x506 quality 64 came to 3.8 MB and looks the
+       same in motion.
+       RULE: measure the folder size. Above about 5 MB, cut frames or quality.
+
+  B2 — DECODING ON EVERY SCROLL EVENT.
+       Setting img.src or creating an Image inside the scroll handler decodes
+       the file every single time. Load each frame ONCE into an array, then
+       only ever drawImage.
+
+  B3 — NO requestAnimationFrame COALESCING.
+       Scroll can fire 100+ times a second. Without coalescing you do a hundred
+       draws for sixty screen refreshes. See section 6.
+
+  B4 — RESIZING THE CANVAS EVERY DRAW.
+       Assigning canvas.width or canvas.height CLEARS AND REALLOCATES the whole
+       canvas, even when you assign the same value it already had. Set it once.
+       If you must respond to resize, check first:
+
+           if (canvas.width !== w){ canvas.width = w; }
+
+  B5 — LAYOUT THRASHING.
+       Reading getBoundingClientRect and then writing a style, in a loop, forces
+       the browser to recalculate layout repeatedly. Read everything first, then
+       write everything.
+
+  B6 — BLOCKING THE FIRST PAINT.
+       Do not await all frames before drawing. First frame, draw, then the rest
+       in the background.
+
+  B7 — LEAKING OBJECT URLs.
+       If you ever create blob URLs for frames, revoke them. Otherwise the tab's
+       memory grows every reload.
+
+
+================================================================================
+  12.  IF SOMETHING GOES WRONG
+================================================================================
+
+  BEFORE you start, make sure the working tree is committed. Then any mistake
+  is one command away from being undone:
+
+      git status              # must be clean before you begin
+      git diff                # what you changed, before committing
+      git checkout -- <file>  # undo one file
+      git stash               # park everything, get back to known-good
+
+  If a change breaks an unrelated feature: DO NOT patch around it. Revert,
+  understand why it broke, then reapply properly. A workaround stacked on a
+  misunderstanding is how a codebase rots.
+
+  If you cannot make something work WITHOUT removing an existing feature: stop
+  and say so plainly. Shipping a hero that broke the export button is worse
+  than shipping no hero.
+
+
+================================================================================
+  13.  FINAL ACCEPTANCE CHECKLIST
+================================================================================
+
+    [ ] The frame folder is zero-padded, sequential, and evenly sampled.
+    [ ] Total frame weight is under 5 MB.
+    [ ] Canvas dimensions are set once, not per draw.
+    [ ] Scroll handler is passive and coalesced with requestAnimationFrame.
+    [ ] Repeat frame indices are skipped.
+    [ ] The first frame paints before the rest have loaded.
+    [ ] Scrubbing never shows a blank canvas.
+    [ ] A hidden hero computes nothing.
+    [ ] The text is legible over the brightest frame in the sequence.
+    [ ] prefers-reduced-motion is respected.
+    [ ] Every pre-existing feature still works.
+    [ ] Console is clean. Network is clean.
+    [ ] The work is committed, and the commit message says what changed and why.
+
+  If every box is ticked, you are done. If one is not, you are not.
+
+
+================================================================================
+  CLOSING NOTE
+================================================================================
+
+  The hardest part of this task is not the animation. It is finishing it without
+  damaging anything around it.
+
+  You will be tempted to reformat a file you are passing through, to rename
+  something for clarity, to delete a line that looks unused. Resist all of it.
+  The line that looks unused is load-bearing about a third of the time, and you
+  will not find out until later.
+
+  Add. Verify. Leave the rest alone.
+
+================================================================================
+
+
+{
+  "spec": "scroll-reveal-hero-frame-sequence",
+  "version": "1.0",
+  "audience": "An assistant with no prior context on this codebase. Follow steps in order. Do not skip verification.",
+  "summary": "A full-screen hero whose background is a video played frame by frame, scrubbed by scroll position. The frames are pre-extracted still images drawn onto a canvas, not a video element.",
+
+  "hardRules": [
+    {
+      "id": "R1",
+      "rule": "Never delete, rename or rewrite anything you did not create in this task.",
+      "why": "You are adding to a working system. Every existing feature must behave identically when you finish.",
+      "severity": "blocking",
+      "forbidden": [
+        "deleting or renaming existing files",
+        "removing existing <script> or <link> tags",
+        "changing shared CSS variables",
+        "changing a router or the ids and classes it depends on",
+        "reformatting or tidying code you were not asked to touch"
+      ],
+      "preferredAlternative": "Create a new file. Adding is almost always safer than editing."
+    },
+    {
+      "id": "R2",
+      "rule": "Verify after every step, not at the end.",
+      "why": "Six small verified steps localise a failure to one step. One large unverified change does not.",
+      "severity": "blocking"
+    },
+    {
+      "id": "R3",
+      "rule": "Measure, do not assume.",
+      "why": "Every number in this spec came from measurement. 'It should be fine' is how bottlenecks ship.",
+      "severity": "high",
+      "examples": ["count the files", "check the byte size", "log the frame index", "read the network tab"]
+    },
+    {
+      "id": "R4",
+      "rule": "If the feature cannot be added without removing an existing one, stop and report.",
+      "why": "A hero that broke the export button is worse than no hero.",
+      "severity": "blocking"
+    }
+  ],
+
+  "concept": {
+    "mechanism": [
+      "A tall section creates scroll distance.",
+      "A sticky child stays pinned while that distance passes.",
+      "Scroll position through the tall section becomes progress from 0 to 1.",
+      "frameIndex = round(progress * (frameCount - 1))"
+    ],
+    "whyCanvasNotVideoTag": "A video element cannot be scrubbed smoothly. Setting currentTime forces a seek and decode from the nearest keyframe, which stutters under fast scrolling. Pre-extracted stills have no seek cost.",
+    "whyCanvasNotImgSrcSwap": "Swapping an img src causes a decode and layout flash per frame. Drawing an already-decoded Image onto a canvas is one blit. Decode once, draw many."
+  },
+
+  "inputs": {
+    "frames": {
+      "count": { "value": 80, "acceptableRange": [60, 90], "reason": "Enough for smooth motion without excessive weight." },
+      "width": 900,
+      "height": 506,
+      "format": "jpeg",
+      "quality": { "value": 64, "acceptableRange": [60, 70] },
+      "naming": { "pattern": "f%03d.jpg", "example": "f001.jpg", "startsAt": 1 },
+      "location": "assets/hero/",
+      "totalSizeBudgetMB": { "target": 4, "max": 5 },
+      "constraints": [
+        {
+          "id": "I1",
+          "constraint": "Zero-pad the frame number to 3 digits.",
+          "why": "Without padding, f10 sorts before f2 and the sequence plays out of order."
+        },
+        {
+          "id": "I2",
+          "constraint": "Sample evenly across the entire source clip.",
+          "why": "Taking the first N frames of a long clip yields the opening moment in slow motion, not the clip.",
+          "formula": "sourceIndex = round(k * (totalFrames - 1) / (wantedFrames - 1))"
+        }
+      ],
+      "verify": [
+        { "type": "listing", "check": "Files are sequential with no gaps from f001 to fNNN." },
+        { "type": "visual", "check": "The first and last frame look like the start and end of the clip, not two frames a second apart." },
+        { "type": "size", "check": "Folder total is under the size budget." }
+      ]
+    }
+  },
+
+  "steps": [
+    {
+      "id": "S1",
+      "name": "Prepare the frames",
+      "creates": ["assets/hero/f001.jpg … fNNN.jpg"],
+      "modifies": [],
+      "action": "Extract frames from the source video, resize, compress, and name them per inputs.frames.",
+      "verify": [
+        { "type": "command", "check": "Count files in assets/hero/", "expect": "equals inputs.frames.count" },
+        { "type": "command", "check": "Sum the folder size", "expect": "under totalSizeBudgetMB.max" }
+      ]
+    },
+
+    {
+      "id": "S2",
+      "name": "Add the markup",
+      "creates": [],
+      "modifies": ["the page's HTML, by insertion only"],
+      "code": "<section class=\"hero\" id=\"hero\">\n  <div class=\"herostage\">\n    <canvas id=\"heroframes\" aria-hidden=\"true\"></canvas>\n    <div class=\"heroinner\" id=\"heroinner\">\n      <h1>Your headline</h1>\n      <p>Your supporting line.</p>\n      <div class=\"heroactions\">\n        <button>Primary</button>\n        <a href=\"#next\">Secondary</a>\n      </div>\n      <a class=\"scrollcue\" href=\"#next\"><span>Scroll</span><i></i></a>\n    </div>\n  </div>\n</section>",
+      "notes": [
+        { "detail": "canvas carries aria-hidden", "why": "It is decoration; a screen reader must not announce it." },
+        { "detail": "the scroll cue sits inside the content flow, after the buttons", "why": "Pinned to the stage floor it lands in the darkest part of the overlay gradient and becomes invisible. See pitfall P4." },
+        { "detail": "the cue is an anchor, not a div", "why": "It should actually navigate somewhere." }
+      ],
+      "beforeYouStart": [
+        { "check": "grep the project for every id you intend to add", "expect": "zero hits", "why": "nav, hero and canvas are commonly already taken" }
+      ],
+      "verify": [
+        { "type": "visual", "check": "Headline is visible. Canvas is blank.", "expect": "blank canvas is correct at this stage" }
+      ]
+    },
+
+    {
+      "id": "S3",
+      "name": "Add the CSS",
+      "creates": ["a new stylesheet, or an appended block"],
+      "modifies": [],
+      "code": ".hero{ position:relative; height:340vh; }\n\n.herostage{\n  position:sticky; top:0; height:100vh; overflow:hidden;\n  display:flex; align-items:center; justify-content:center;\n}\n\n.herostage canvas{\n  position:absolute; inset:0;\n  width:100%; height:100%;\n  object-fit:cover;\n  opacity:.34;\n}\n\n.herostage::after{\n  content:''; position:absolute; inset:0; pointer-events:none;\n  background:\n    radial-gradient(120% 90% at 50% 40%, transparent 0%, rgba(8,8,8,.55) 55%, #080808 100%),\n    linear-gradient(180deg, rgba(8,8,8,.9) 0%, transparent 22%, transparent 70%, #080808 100%);\n}\n\n.heroinner{ position:relative; z-index:2; text-align:center; }",
+      "declarations": [
+        { "property": "height:340vh", "why": "The scroll distance that plays the sequence. Roughly two and a half screens.", "tuneWhen": "last, once everything works" },
+        { "property": "position:sticky; top:0", "why": "Pins the stage while the tall parent scrolls past.", "warning": "Any overflow:hidden on an ancestor silently disables sticky. This is the most common cause of 'sticky does not work'." },
+        { "property": "object-fit:cover", "why": "Lets you draw at the frame's natural size and let CSS crop to the viewport, so no draw-rectangle recalculation on resize." },
+        { "property": "opacity:.34", "why": "The frames are a backdrop. At full opacity the text is unreadable." },
+        { "property": "::after gradient", "why": "Makes text legible over a bright frame.", "warning": "Must be pointer-events:none or it swallows clicks." },
+        { "property": "z-index:2", "why": "Content must sit above both the canvas and the gradient." }
+      ],
+      "verify": [
+        { "type": "visual", "check": "The headline stays pinned mid-screen for a while, then releases." }
+      ]
+    },
+
+    {
+      "id": "S4",
+      "name": "Write the scroll logic",
+      "creates": ["js/hero.js"],
+      "modifies": [],
+      "warning": "Write this in a NEW file. Do not append to an existing script.",
+      "code": "(function () {\n'use strict';\n\nconst FRAME_COUNT = 80;\nconst framePath = i => 'assets/hero/f' + String(i).padStart(3,'0') + '.jpg';\n\nconst hero   = document.getElementById('hero');\nconst canvas = document.getElementById('heroframes');\nif (!hero || !canvas) return;\n\nconst images = new Array(FRAME_COUNT).fill(null);\nlet ctx = null, lastDrawn = -1, ticking = false;\n\ncanvas.width  = 900;\ncanvas.height = 506;\nctx = canvas.getContext('2d', { alpha:false });\nctx.fillStyle = '#080808';\nctx.fillRect(0, 0, canvas.width, canvas.height);\n\nfunction load(i){\n  return new Promise(resolve => {\n    const img = new Image();\n    img.onload  = () => { images[i] = img; resolve(img); };\n    img.onerror = () => resolve(null);\n    img.src = framePath(i + 1);\n  });\n}\n\nfunction nearestLoaded(i){\n  if (images[i]) return images[i];\n  for (let d = 1; d < FRAME_COUNT; d++){\n    if (images[i-d]) return images[i-d];\n    if (images[i+d]) return images[i+d];\n  }\n  return null;\n}\n\nfunction draw(i){\n  const img = nearestLoaded(i);\n  if (!img) return;\n  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);\n}\n\nfunction update(){\n  ticking = false;\n  const rect = hero.getBoundingClientRect();\n  if (rect.height === 0) return;\n  const total = rect.height - window.innerHeight;\n  const progress = total <= 0 ? 0 : Math.min(1, Math.max(0, -rect.top / total));\n  const i = Math.min(FRAME_COUNT - 1, Math.round(progress * (FRAME_COUNT - 1)));\n  if (i !== lastDrawn){ lastDrawn = i; draw(i); }\n}\n\nfunction onScroll(){\n  if (!ticking){ ticking = true; requestAnimationFrame(update); }\n}\n\nwindow.addEventListener('scroll', onScroll, { passive:true });\nwindow.addEventListener('resize', () => { lastDrawn = -1; update(); }, { passive:true });\nonScroll();\n\n})();",
+      "criticalLines": [
+        { "line": "if (!ticking){ ticking = true; requestAnimationFrame(update); }", "why": "Scroll fires far more often than the screen refreshes. This collapses a burst into one draw per animation frame." },
+        { "line": "{ passive:true }", "why": "Tells the browser you will not call preventDefault, so it need not wait for your handler before scrolling." },
+        { "line": "if (i !== lastDrawn)", "why": "Most scroll events land on the same frame index. Redrawing an identical image is pure waste." },
+        { "line": "nearestLoaded(i)", "why": "Frames arrive out of order relative to scrolling. Never show a blank canvas." },
+        { "line": "if (rect.height === 0) return;", "why": "A hidden hero returns zeroes, progress becomes NaN, and the frame index is poisoned. See pitfall P7." },
+        { "line": "img.onerror = () => resolve(null)", "why": "One missing frame must not stall the whole sequence." }
+      ],
+      "verify": [
+        { "type": "visual", "check": "Scrolling plays the sequence forward and backward." },
+        { "type": "console", "check": "Zero errors." }
+      ]
+    },
+
+    {
+      "id": "S5",
+      "name": "Add progressive loading",
+      "creates": [],
+      "modifies": ["js/hero.js"],
+      "code": "async function preload(){\n  await load(0);\n  draw(0);\n\n  const CONCURRENCY = 6;\n  let next = 1;\n  await Promise.all(new Array(CONCURRENCY).fill(0).map(async () => {\n    while (next < FRAME_COUNT){\n      const i = next++;\n      await load(i);\n      if (i === lastDrawn) draw(i);\n    }\n  }));\n  update();\n}\npreload();",
+      "rationale": {
+        "doNotAwaitAll": "On a slow connection that is several seconds of blank hero.",
+        "concurrencyChoice": "One at a time wastes the connection. All at once floods it and the browser queues them anyway. Six keeps the pipe full without starving fonts, stylesheets and content."
+      },
+      "verify": [
+        { "type": "network", "check": "Throttle to Fast 3G and reload.", "expect": "First frame appears almost at once; scrubbing never shows a blank canvas, only a slightly stale frame." }
+      ]
+    },
+
+    {
+      "id": "S6",
+      "name": "Wire the script in",
+      "creates": [],
+      "modifies": ["the page's HTML, by insertion only"],
+      "action": "Add <script src=\"js/hero.js\"></script> at the end of <body>, after the markup and after any script it depends on.",
+      "warnings": [
+        "Do not place it in <head> without defer.",
+        "Do not mix defer with reliance on document order."
+      ],
+      "verify": [
+        { "type": "console", "check": "Zero errors.", "onFail": "'Cannot read properties of null' means the script ran before the markup existed." }
+      ]
+    }
+  ],
+
+  "pitfalls": [
+    {
+      "id": "P1",
+      "symptom": "A file edit appears to succeed but the file is unchanged.",
+      "cause": "Writing file content through a shell heredoc. Quotes, apostrophes and backticks break the shell parser and the command silently does nothing.",
+      "fix": "Write files with a file-writing tool, not by piping text through a shell. If unavoidable, verify the file actually changed afterwards.",
+      "realCost": "Two fixes were applied to a file that had never been written."
+    },
+    {
+      "id": "P2",
+      "symptom": "Staggered entrance animations do not stagger; children appear all at once or not at all.",
+      "cause": "A wrapper element carries its own fade while its children carry theirs. Nested opacity multiplies, so a child at 0ms inside a parent at 170ms stays invisible until the parent catches up.",
+      "fix": "Only leaf elements carry an entrance animation. Never nest a staged child inside a staged parent."
+    },
+    {
+      "id": "P3",
+      "symptom": "A drop or click lands at the wrong position, off by exactly the scroll distance.",
+      "cause": "Adding container.scrollLeft to a coordinate derived from getBoundingClientRect, which already accounts for scroll.",
+      "fix": "Rect coordinates are viewport-relative. Do not add scroll to them."
+    },
+    {
+      "id": "P4",
+      "symptom": "The scroll cue is invisible.",
+      "cause": "Pinned to the bottom of the sticky stage, directly inside the darkest part of the overlay gradient.",
+      "fix": "Place the cue in the content flow beneath the buttons, where the gradient is not at its strongest."
+    },
+    {
+      "id": "P5",
+      "symptom": "A button renders as bare underlined text after being changed to a link.",
+      "cause": "The styling was attached to the 'button' element selector, which an anchor does not inherit.",
+      "fix": "When you change an element's tag, re-check every style that targeted the old tag."
+    },
+    {
+      "id": "P6",
+      "symptom": "The hero plays the opening moment of the clip in slow motion.",
+      "cause": "Taking the first N frames of a long source instead of sampling across it.",
+      "fix": "Use the even-sampling formula in inputs.frames.constraints.I2."
+    },
+    {
+      "id": "P7",
+      "symptom": "Frame index becomes NaN; canvas stops updating.",
+      "cause": "A hidden hero still receives scroll events. getBoundingClientRect returns zeroes and the progress division produces NaN.",
+      "fix": "Guard on rect.height === 0 before computing anything."
+    }
+  ],
+
+  "performance": [
+    {
+      "id": "B1",
+      "rule": "Keep the frame set small.",
+      "measured": "300 frames at full size was 35 MB. 80 frames at 900x506 quality 64 was 3.8 MB and looks the same in motion.",
+      "action": "Measure the folder. Above 5 MB, cut frames or quality."
+    },
+    {
+      "id": "B2",
+      "rule": "Never decode inside the scroll handler.",
+      "bad": "setting img.src or constructing an Image during scroll",
+      "good": "load each frame once into an array, then only ever drawImage"
+    },
+    {
+      "id": "B3",
+      "rule": "Coalesce scroll with requestAnimationFrame.",
+      "why": "Scroll can fire over 100 times a second against 60 screen refreshes."
+    },
+    {
+      "id": "B4",
+      "rule": "Set canvas dimensions once.",
+      "why": "Assigning canvas.width or canvas.height clears and reallocates the entire canvas, even when assigning the value it already holds.",
+      "good": "if (canvas.width !== w){ canvas.width = w; }"
+    },
+    {
+      "id": "B5",
+      "rule": "Do not interleave layout reads and style writes.",
+      "why": "Forces repeated layout recalculation.",
+      "good": "read everything first, then write everything"
+    },
+    {
+      "id": "B6",
+      "rule": "Do not block the first paint.",
+      "good": "draw frame one, then load the rest in the background"
+    },
+    {
+      "id": "B7",
+      "rule": "Revoke any object URLs you create.",
+      "why": "Otherwise tab memory grows on every reload."
+    }
+  ],
+
+  "rollback": {
+    "before": "Ensure the working tree is committed and clean before starting.",
+    "commands": [
+      { "cmd": "git status", "use": "must be clean before you begin" },
+      { "cmd": "git diff", "use": "review what you changed before committing" },
+      { "cmd": "git checkout -- <file>", "use": "undo one file" },
+      { "cmd": "git stash", "use": "park everything and return to known-good" }
+    ],
+    "policy": "If a change breaks an unrelated feature, revert rather than patch around it. Understand the cause, then reapply properly. A workaround stacked on a misunderstanding is how a codebase rots."
+  },
+
+  "acceptance": [
+    { "id": "A1",  "check": "Frame folder is zero-padded, sequential and evenly sampled.", "method": "listing" },
+    { "id": "A2",  "check": "Total frame weight is under 5 MB.", "method": "size" },
+    { "id": "A3",  "check": "Canvas dimensions are set once, not per draw.", "method": "code-review" },
+    { "id": "A4",  "check": "Scroll handler is passive and coalesced with requestAnimationFrame.", "method": "code-review" },
+    { "id": "A5",  "check": "Repeat frame indices are skipped.", "method": "code-review" },
+    { "id": "A6",  "check": "First frame paints before the rest have loaded.", "method": "network-throttle" },
+    { "id": "A7",  "check": "Scrubbing never shows a blank canvas.", "method": "visual" },
+    { "id": "A8",  "check": "A hidden hero computes nothing.", "method": "code-review" },
+    { "id": "A9",  "check": "Text is legible over the brightest frame in the sequence.", "method": "visual" },
+    { "id": "A10", "check": "prefers-reduced-motion is respected.", "method": "os-setting" },
+    { "id": "A11", "check": "Every pre-existing feature still works.", "method": "manual-regression", "note": "This is the check people skip. It is the one that catches you having broken something else." },
+    { "id": "A12", "check": "Console is clean and the network tab shows exactly frameCount image requests, all 200.", "method": "devtools" },
+    { "id": "A13", "check": "Work is committed with a message saying what changed and why.", "method": "git-log" }
+  ],
+
+  "closingNote": "The hardest part of this task is not the animation. It is finishing it without damaging anything around it. You will be tempted to reformat a file you are passing through, rename something for clarity, or delete a line that looks unused. Resist all of it. The line that looks unused is load-bearing about a third of the time, and you will not find out until later. Add, verify, and leave the rest alone."
+}
+
+
+/* =============================================================================
+ *  hero-scroll.js
+ *  A drop-in scroll-reveal hero: your video plays frame by frame as the
+ *  visitor scrolls, with your headline sitting on top of it.
+ *
+ *  HOW TO USE  — two lines of HTML, nothing else.
+ *
+ *      <section id="hero">
+ *        <h1>Your headline</h1>
+ *        <p>Your supporting line.</p>
+ *      </section>
+ *
+ *      <script src="hero-scroll.js"></script>
+ *
+ *  This file builds the canvas, writes its own CSS and runs the animation.
+ *  Whatever you put inside #hero stays as the overlaid content.
+ *
+ *  FRAMES: run prepare_frames.py first. It creates assets/hero/f001.jpg …
+ *  and prints the two settings to paste below.
+ * ========================================================================== */
+
+(function () {
+'use strict';
+
+/* =============================================================================
+ *                          >>>  EDIT THIS BLOCK  <<<
+ * ========================================================================== */
+
+var CONFIG = {
+
+  /* -------------------------------------------------------------------------
+   *  1. WHERE YOUR FRAMES LIVE
+   *
+   *     The folder holding your f001.jpg, f002.jpg … files.
+   *     This is the same folder prepare_frames.py wrote to.
+   *     No slash at the end.
+   * ---------------------------------------------------------------------- */
+  folder: 'assets/hero',
+
+  /* -------------------------------------------------------------------------
+   *  2. HOW MANY FRAMES THERE ARE
+   *
+   *     prepare_frames.py prints this number when it finishes. Paste it here.
+   *     Or leave it as 'auto' and this script will work it out itself
+   *     (costs a handful of extra requests once, on first load).
+   * ---------------------------------------------------------------------- */
+  count: 'auto',
+
+  /* -------------------------------------------------------------------------
+   *  3. HOW THEY ARE NAMED
+   *     Defaults match prepare_frames.py. Only change these if you renamed
+   *     the files yourself.  f + 001 + .jpg
+   * ---------------------------------------------------------------------- */
+  prefix: 'f',
+  pad: 3,
+  ext: 'jpg',
+
+  /* -------------------------------------------------------------------------
+   *  4. HOW LONG THE EFFECT LASTS
+   *
+   *     How much scrolling plays the whole sequence, in screen-heights.
+   *       300 = about three screens   (default, unhurried)
+   *       200 = quicker, punchier
+   *       450 = slow and cinematic
+   *     Tune this LAST, once everything else works.
+   * ---------------------------------------------------------------------- */
+  scrollLength: 340,
+
+  /* -------------------------------------------------------------------------
+   *  5. LOOK
+   *
+   *     frameOpacity  how visible the footage is behind your text.
+   *                   0.34 keeps text comfortably readable. Above ~0.5 it
+   *                   starts to fight the words.
+   *     background    the page colour the frames fade into at the edges.
+   *                   Set this to your own site background.
+   * ---------------------------------------------------------------------- */
+  frameOpacity: 0.34,
+  background: '#080808',
+
+  /* -------------------------------------------------------------------------
+   *  6. THE SECTION TO TAKE OVER
+   *     Change only if your section uses a different id.
+   * ---------------------------------------------------------------------- */
+  heroId: 'hero'
+};
+
+/* =============================================================================
+ *                       >>>  STOP EDITING HERE  <<<
+ * ========================================================================== */
+
+
+/* ---- find the section, and refuse politely if it is not there ----------- */
+var hero = document.getElementById(CONFIG.heroId);
+if (!hero) {
+  console.warn('[hero-scroll] No element with id "' + CONFIG.heroId +
+               '" was found, so the hero did nothing. Add <section id="' +
+               CONFIG.heroId + '">…</section> to your page.');
+  return;
+}
+
+var reduced = window.matchMedia &&
+              window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function framePath(n) {
+  var s = String(n);
+  while (s.length < CONFIG.pad) s = '0' + s;
+  return CONFIG.folder + '/' + CONFIG.prefix + s + '.' + CONFIG.ext;
+}
+
+/* ---- build the structure around whatever content is already inside ------ */
+var inner = document.createElement('div');
+inner.className = 'hs-inner';
+while (hero.firstChild) inner.appendChild(hero.firstChild);   // keep their content
+
+var canvas = document.createElement('canvas');
+canvas.className = 'hs-canvas';
+canvas.setAttribute('aria-hidden', 'true');                   // decoration only
+
+var veil = document.createElement('div');
+veil.className = 'hs-veil';
+veil.setAttribute('aria-hidden', 'true');
+
+var stage = document.createElement('div');
+stage.className = 'hs-stage';
+stage.appendChild(canvas);
+stage.appendChild(veil);
+stage.appendChild(inner);
+
+hero.classList.add('hs-hero');
+hero.appendChild(stage);
+
+/* ---- its own stylesheet, so there is no second file to remember --------- */
+var css =
+  '.hs-hero{position:relative;height:' + (reduced ? 100 : CONFIG.scrollLength) + 'vh}' +
+  '.hs-stage{position:sticky;top:0;height:100vh;overflow:hidden;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    'background:' + CONFIG.background + '}' +
+  '.hs-canvas{position:absolute;inset:0;width:100%;height:100%;' +
+    'object-fit:cover;opacity:' + CONFIG.frameOpacity + '}' +
+  /* keeps the words readable over even the brightest frame */
+  '.hs-veil{position:absolute;inset:0;pointer-events:none;background:' +
+    'radial-gradient(120% 90% at 50% 40%,transparent 0%,rgba(0,0,0,.5) 55%,' +
+      CONFIG.background + ' 100%),' +
+    'linear-gradient(180deg,rgba(0,0,0,.55) 0%,transparent 22%,transparent 70%,' +
+      CONFIG.background + ' 100%)}' +
+  '.hs-inner{position:relative;z-index:2;text-align:center;' +
+    'width:min(1100px,calc(100% - 48px));margin:0 auto}';
+
+var style = document.createElement('style');
+style.textContent = css;
+document.head.appendChild(style);
+
+/* ---- canvas set up ONCE: assigning width/height reallocates it ---------- */
+var ctx = canvas.getContext('2d', { alpha: false });
+var sized = false;
+
+function sizeCanvasTo(img) {
+  if (sized) return;
+  canvas.width = img.naturalWidth || 900;
+  canvas.height = img.naturalHeight || 506;   // CSS object-fit does the cropping
+  sized = true;
+}
+
+ctx.fillStyle = CONFIG.background;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+/* ---- loading ------------------------------------------------------------ */
+var images = [];
+var frameCount = 0;
+var lastDrawn = -1;
+var ticking = false;
+
+function loadOne(i) {
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () { images[i] = img; resolve(img); };
+    img.onerror = function () { resolve(null); };   // one gap must not stall the rest
+    img.src = framePath(i + 1);
+  });
+}
+
+function exists(n) {
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () { resolve(true); };
+    img.onerror = function () { resolve(false); };
+    img.src = framePath(n);
+  });
+}
+
+/* Work out how many frames there are without asking for all of them:
+   double until one is missing, then binary search the gap. */
+async function detectCount() {
+  if (!(await exists(1))) return 0;
+  var lo = 1, hi = 2;
+  while (hi <= 1024 && await exists(hi)) { lo = hi; hi *= 2; }
+  while (lo + 1 < hi) {
+    var mid = Math.floor((lo + hi) / 2);
+    if (await exists(mid)) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+/* ---- drawing ------------------------------------------------------------ */
+function nearestLoaded(i) {
+  if (images[i]) return images[i];
+  for (var d = 1; d < frameCount; d++) {
+    if (images[i - d]) return images[i - d];
+    if (images[i + d]) return images[i + d];
+  }
+  return null;
+}
+
+function draw(i) {
+  var img = nearestLoaded(i);
+  if (!img) return;
+  sizeCanvasTo(img);
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+}
+
+function update() {
+  ticking = false;
+  if (!frameCount) return;
+
+  var rect = hero.getBoundingClientRect();
+  if (rect.height === 0) return;              // hidden: compute nothing
+
+  var travel = rect.height - window.innerHeight;
+  var progress = travel <= 0 ? 0 : Math.min(1, Math.max(0, -rect.top / travel));
+
+  var i = Math.min(frameCount - 1, Math.round(progress * (frameCount - 1)));
+  if (i !== lastDrawn) { lastDrawn = i; draw(i); }   // skip repeat indices
+}
+
+function onScroll() {
+  // scroll fires far more often than the screen refreshes; collapse the burst
+  if (!ticking) { ticking = true; requestAnimationFrame(update); }
+}
+
+/* ---- start -------------------------------------------------------------- */
+async function start() {
+  frameCount = CONFIG.count === 'auto' ? await detectCount() : CONFIG.count;
+
+  if (!frameCount) {
+    console.warn('[hero-scroll] No frames found at "' + framePath(1) + '". ' +
+                 'Run prepare_frames.py, or check the folder setting.');
+    return;
+  }
+  images = new Array(frameCount).fill(null);
+
+  // first frame immediately, so the hero is never blank
+  await loadOne(0);
+  draw(0);
+
+  if (reduced) return;    // one still frame is the whole effect in that mode
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', function () { lastDrawn = -1; update(); },
+                          { passive: true });
+  onScroll();
+
+  // the rest in the background, a few at a time: one by one wastes the
+  // connection, all at once starves the fonts and stylesheets
+  var next = 1;
+  await Promise.all(new Array(6).fill(0).map(async function () {
+    while (next < frameCount) {
+      var i = next++;
+      await loadOne(i);
+      if (i === lastDrawn) draw(i);       // repaint if the reader is already here
+    }
+  }));
+  update();
+}
+
+start();
+
+})();

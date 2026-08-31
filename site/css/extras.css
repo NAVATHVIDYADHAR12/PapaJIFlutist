@@ -1,0 +1,128 @@
+/* ============================================================
+   THE ♫ BURST BUTTON — beside the portrait caption
+   ============================================================ */
+.orb-caption{ display:flex; align-items:center; gap:.9rem; text-align:left; }
+.orb-caption-text{ display:flex; flex-direction:column; min-width:0; }
+.orb-name{ display:block; }
+.orb-role{ display:block; }
+
+.burst-btn{
+  position:relative; flex:0 0 auto;
+  width:44px; height:44px; padding:0;
+  display:grid; place-items:center;
+  border:1px solid rgba(212,175,99,.6); border-radius:50%;
+  background:linear-gradient(140deg,#F6E7C2,var(--gold) 55%,var(--gold-dp));
+  box-shadow:0 8px 20px rgba(184,137,50,.34);
+  transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.burst-btn:hover{ transform:translateY(-2px) scale(1.07); box-shadow:0 14px 28px rgba(184,137,50,.42); }
+.burst-btn:active{ transform:scale(.94); }
+
+.burst-glyph{
+  position:relative; z-index:2;
+  font-size:1.15rem; line-height:1; color:#3A2A08;
+  animation:burstSway 3.4s ease-in-out infinite;
+}
+@keyframes burstSway{
+  0%,100%{ transform:rotate(-8deg); }
+  50%    { transform:rotate(8deg); }
+}
+
+.burst-halo{
+  position:absolute; inset:-5px; border-radius:50%; pointer-events:none;
+  border:1px solid rgba(212,175,99,.7);
+  animation:burstHalo 2.8s ease-out infinite;
+}
+@keyframes burstHalo{
+  0%  { transform:scale(.9);  opacity:.9; }
+  100%{ transform:scale(1.5); opacity:0; }
+}
+
+/* a kick each time it is pressed, so repeat presses feel answered */
+.burst-btn.is-hit{ animation:burstHit .5s var(--ease); }
+@keyframes burstHit{
+  0%  { transform:scale(1); }
+  35% { transform:scale(1.22) rotate(-12deg); }
+  100%{ transform:scale(1) rotate(0deg); }
+}
+
+/* ============================================================
+   CONTACT — email alongside the phone
+   ============================================================ */
+.contact-actions{ display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
+.contact-mail{
+  color:#F6ECD6; background:rgba(255,255,255,.1);
+  border-color:rgba(212,175,99,.45);
+  font-size:.84rem; letter-spacing:0; text-transform:none;
+}
+.contact-mail:hover{ background:rgba(255,255,255,.2); }
+.mail-icon{
+  position:relative; width:16px; height:12px; flex:0 0 auto;
+  border:1.4px solid currentColor; border-radius:2px;
+}
+.mail-icon::after{
+  content:""; position:absolute; left:1px; top:1px;
+  width:11.2px; height:6px;
+  border-top:1.4px solid currentColor; border-right:1.4px solid currentColor;
+  transform:rotate(45deg) scaleY(.62); transform-origin:0 0;
+}
+.branch-mail span{ font-size:.74rem; word-break:break-all; }
+
+/* ============================================================
+   FOOTER SOCIAL
+   ============================================================ */
+.footer-social{
+  display:flex; flex-wrap:wrap; justify-content:center; gap:.7rem;
+  margin:0 0 1.4rem;
+}
+.social{
+  display:inline-flex; align-items:center; gap:.6rem;
+  padding:.6rem .95rem; border-radius:var(--radius);
+  border:1px solid rgba(212,175,99,.34);
+  background:rgba(255,255,255,.08);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  transition:background .28s ease, transform .28s var(--ease), border-color .28s ease;
+}
+.social:hover{ background:rgba(255,255,255,.18); border-color:var(--gold); transform:translateY(-2px); }
+.social-text{ display:flex; flex-direction:column; line-height:1.25; text-align:left; }
+.social-text b{ font-size:.8rem; font-weight:800; color:#F6ECD6; }
+.social-text i{ font-style:normal; font-size:.72rem; color:rgba(234,247,245,.72); }
+
+.social-icon{ position:relative; width:26px; height:26px; flex:0 0 auto; border-radius:7px; }
+.social-ig{
+  background:radial-gradient(circle at 30% 107%,
+    #FDCB5C 0%, #E95950 45%, #D62976 60%, #962FBF 80%, #4F5BD5 100%);
+}
+.social-ig::before{
+  content:""; position:absolute; inset:6px; border-radius:50%;
+  border:1.6px solid #fff;
+}
+.social-ig::after{
+  content:""; position:absolute; right:5px; top:4.5px;
+  width:3px; height:3px; border-radius:50%; background:#fff;
+}
+.social-mail{ background:linear-gradient(140deg,var(--peacock),var(--emerald) 60%,var(--gold-dp)); }
+.social-mail::before{
+  content:""; position:absolute; inset:7px 5px; border:1.6px solid #fff; border-radius:2px;
+}
+.social-mail::after{
+  content:""; position:absolute; left:7.4px; top:8.4px;
+  width:9px; height:5px;
+  border-top:1.6px solid #fff; border-right:1.6px solid #fff;
+  transform:rotate(45deg) scaleY(.6); transform-origin:0 0;
+}
+
+@media (max-width:900px){
+  .contact-mail{ font-size:.76rem; word-break:break-all; }
+}
+@media (max-width:640px){
+  .burst-btn{ width:38px; height:38px; }
+  .burst-glyph{ font-size:1rem; }
+  .orb-caption{ gap:.65rem; }
+  .contact-actions{ flex-direction:column; align-items:stretch; }
+  .footer-social{ flex-direction:column; align-items:stretch; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .burst-glyph,.burst-halo,.burst-btn.is-hit{ animation:none; }
+}

@@ -1,0 +1,16 @@
+# dependencies
+node_modules/
+
+# OS / editor cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/
+
+# logs and local runtime junk
+*.log
+npm-debug.log*
