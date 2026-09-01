@@ -235,20 +235,6 @@ p{ margin:0 0 1rem; }
 .nav-burger[aria-expanded="true"] i:nth-child(3){ transform:translateY(-5px) rotate(-45deg); }
 
 /* ============================================================
-   CURSOR SPARK
-   ============================================================ */
-.cursor-spark{
-  position:fixed; left:var(--cx,-100px); top:var(--cy,-100px); z-index:150;
-  width:16px; height:16px; pointer-events:none; opacity:0;
-  transform:translate(-50%,-50%);
-  background:radial-gradient(circle,rgba(212,175,99,.85),rgba(25,183,197,.28) 55%,transparent 70%);
-  border-radius:50%; filter:blur(1px);
-  transition:opacity .3s ease, width .25s var(--ease), height .25s var(--ease);
-}
-.cursor-spark.is-on{ opacity:1; }
-.cursor-spark.is-big{ width:44px; height:44px; }
-
-/* ============================================================
    VIDEO MODAL
    ============================================================ */
 .vmodal{ position:fixed; inset:0; z-index:130; display:grid; place-items:center; padding:4vmin; }
