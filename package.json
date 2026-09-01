@@ -1,0 +1,13 @@
+{
+  "name": "flute-classes",
+  "version": "1.0.0",
+  "description": "Flute Classes — Navath Vittaleshwar",
+  "main": "serve.js",
+  "scripts": {
+    "dev": "node serve.js",
+    "start": "node serve.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

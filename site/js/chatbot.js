@@ -16,6 +16,12 @@ var log    = document.getElementById('botLog');
 var form   = document.getElementById('botForm');
 var input  = document.getElementById('botInput');
 var chips  = document.getElementById('botChips');
+var tools  = document.getElementById('botTools');
+var readBt = document.getElementById('botRead');
+var transp = document.getElementById('botTransport');
+var pauseB = document.getElementById('botPause');
+var stopB  = document.getElementById('botStop');
+var micBt  = document.getElementById('botMic');
 if (!bot || !fab || !panel || !log) return;
 
 var PHONE = '94407 11441';
@@ -127,7 +133,9 @@ function respond(text) {
   var typing = addTyping();
   window.setTimeout(function () {
     typing.remove();
-    addMsg(answerFor(text), 'bot');
+    var reply = answerFor(text);
+    addMsg(reply, 'bot');
+    speak(plainText(reply));
   }, 520 + Math.random() * 420);
 }
 
@@ -146,6 +154,138 @@ function buildChips() {
     chips.appendChild(b);
   });
 }
+
+/* ============================================================
+   VOICE
+
+   Read aloud  — speechSynthesis speaks each reply as it arrives,
+                 with pause/resume and stop.
+   Voice input — SpeechRecognition dictates into the field.
+
+   Both are feature-detected: if the browser has neither, the
+   controls are never shown, so nothing offers what it cannot do.
+   ============================================================ */
+var synth = window.speechSynthesis || null;
+var SR    = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+
+var readAloud = false;
+var speaking  = false;
+var paused    = false;
+
+/* the replies carry markup and links; speak the words only */
+function plainText(html) {
+  var d = document.createElement('div');
+  d.innerHTML = html;
+  return (d.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+function setSpeakingUI(on) {
+  speaking = on;
+  if (tools) tools.classList.toggle('is-speaking', on);
+  if (transp) transp.hidden = !on;
+  if (!on) { paused = false; setPauseIcon(false); }
+}
+
+function setPauseIcon(isPaused) {
+  if (!pauseB) return;
+  var ico = pauseB.firstElementChild;
+  if (ico) ico.className = isPaused ? 'ico-play-sm' : 'ico-pause';
+  pauseB.setAttribute('aria-label', isPaused ? 'Resume reading' : 'Pause reading');
+}
+
+function speak(text) {
+  if (!synth || !readAloud || !text) return;
+  synth.cancel();                       // never let two replies overlap
+  var u = new SpeechSynthesisUtterance(text);
+  u.rate = 0.98;
+  u.pitch = 1;
+  u.lang = document.documentElement.lang || 'en-US';
+  u.onstart = function () { setSpeakingUI(true); };
+  u.onend   = function () { setSpeakingUI(false); };
+  u.onerror = function () { setSpeakingUI(false); };
+  synth.speak(u);
+}
+
+function stopSpeaking() {
+  if (synth) synth.cancel();
+  setSpeakingUI(false);
+}
+
+if (synth && readBt) {
+  readBt.addEventListener('click', function () {
+    readAloud = !readAloud;
+    readBt.setAttribute('aria-pressed', String(readAloud));
+    if (!readAloud) stopSpeaking();
+    else {
+      // read the reply already on screen, so the button does something now
+      var last = log.querySelector('.bot-msg.is-bot:last-child');
+      if (last) speak(plainText(last.innerHTML));
+    }
+  });
+
+  if (pauseB) pauseB.addEventListener('click', function () {
+    if (!synth) return;
+    if (paused) { synth.resume(); paused = false; }
+    else        { synth.pause();  paused = true;  }
+    setPauseIcon(paused);
+  });
+
+  if (stopB) stopB.addEventListener('click', stopSpeaking);
+} else if (readBt) {
+  readBt.hidden = true;                 // no synthesis here
+}
+
+/* ---------- voice to text ---------- */
+var rec = null;
+var listening = false;
+
+if (SR && micBt) {
+  rec = new SR();
+  rec.lang = document.documentElement.lang || 'en-US';
+  rec.interimResults = true;
+  rec.continuous = false;
+  rec.maxAlternatives = 1;
+
+  var baseText = '';
+
+  rec.onstart = function () {
+    listening = true;
+    micBt.setAttribute('aria-pressed', 'true');
+    if (input) input.classList.add('is-listening');
+  };
+
+  rec.onresult = function (e) {
+    var said = '';
+    for (var i = e.resultIndex; i < e.results.length; i++) said += e.results[i][0].transcript;
+    if (input) input.value = (baseText ? baseText + ' ' : '') + said.trim();
+  };
+
+  rec.onerror = function (e) {
+    endListening();
+    if (e && (e.error === 'not-allowed' || e.error === 'service-not-allowed')) {
+      addMsg('I could not reach the microphone — the browser blocked it. You can allow it from the padlock in the address bar, or just type instead.', 'bot');
+    }
+  };
+
+  rec.onend = endListening;
+
+  micBt.hidden = false;
+  micBt.addEventListener('click', function () {
+    if (listening) { try { rec.stop(); } catch (e) {} return; }
+    baseText = (input && input.value ? input.value.trim() : '');
+    stopSpeaking();                     // do not listen to our own voice
+    try { rec.start(); } catch (e) { endListening(); }
+  });
+}
+
+function endListening() {
+  listening = false;
+  if (micBt) micBt.setAttribute('aria-pressed', 'false');
+  if (input) input.classList.remove('is-listening');
+}
+
+/* show the toolbar only if at least one of the two is available */
+if (tools && (synth || SR)) tools.hidden = false;
 
 /* ---------- open / close ---------- */
 var greeted = false;
@@ -167,6 +307,8 @@ function open() {
 }
 
 function shut() {
+  stopSpeaking();
+  if (listening && rec) { try { rec.stop(); } catch (e) {} }
   panel.hidden = true;
   bot.classList.remove('is-open');
   fab.setAttribute('aria-expanded', 'false');
